@@ -12,8 +12,9 @@ STATE_X_READ = "X_?"
 STATE_Y_READ = "Y_?"
 STATE_UP_READ = "^_?"
 STATE_DOWN_READ = "v_?"
+STATE_GROUP_END = ")"
 
-START_SYMBOLS = [SYMB_X, SYMB_Y, GROUP_O, ARROW_DOWN, ARROW_UP]
+START_SYMBOLS = [SYMB_X, SYMB_Y, GROUP_O, GROUP_C, ARROW_DOWN, ARROW_UP]
 
 class LSASyntaxError(Exception):
     pass
@@ -24,18 +25,30 @@ def assert_s(val, lst):
         msg = u"%s not in %s" % (ord(val), [ord(x) for x in lst])
         raise LSASyntaxError(msg)
 
+def assert_b(boolean, message="assertion failed"):
+    if not boolean:
+        raise LSASyntaxError(message)
 
 def lca_machine():
     STATE = None
+    INGROUP = False
     val = yield
     pushback = False
     ret = None
+    grouped_node = None
 
     elementary_node_states = [STATE_X_READ, STATE_Y_READ, STATE_UP_READ, STATE_DOWN_READ]
 
     def return_value(node, state):
         if state in elementary_node_states:
-            return Node(name=node[0], index=int(node[1:]))
+            node_obj = Node(name=node[0], index=int(node[1:]))
+            if INGROUP:
+                grouped_node.append(node_obj)
+                return None
+            else:
+                return node_obj
+        elif state == STATE_GROUP_END:
+            return grouped_node
 
     while True:
         if val == SYMB_END:
@@ -58,7 +71,20 @@ def lca_machine():
                 STATE = STATE_UP_READ
             elif val == ARROW_DOWN:
                 STATE = STATE_DOWN_READ
+            elif val == GROUP_O:
+                assert_b(INGROUP==False, "nested groups forbidden")
+                INGROUP = True
+                grouped_node = []
+            elif val == GROUP_C:
+                assert_b(INGROUP==True, "unexpected bracket")
+                STATE = STATE_GROUP_END
+                pushback = True
             node = val
+
+        elif STATE == STATE_GROUP_END:
+            ret = return_value(node, STATE)
+            STATE = STATE_EXPR_START
+            INGROUP = False
 
         elif STATE in elementary_node_states:
             assert_s(val, SUBSCRIPT_symbols + START_SYMBOLS)
@@ -92,6 +118,6 @@ def parse(src):
 
 if __name__ == '__main__':
     try:
-        print (parse(u'\u25cbX\u2081Y\u2082\u2191\u2083\u2193\u2083\u25cf'))
+        print (parse(u'\u25cbX\u2081(Y\u2082Y\u2083)\u2191\u2083\u2193\u2083\u25cf'))
     except LSASyntaxError, e:
         print "Syntax error " + e.message
