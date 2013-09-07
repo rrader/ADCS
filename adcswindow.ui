@@ -30,7 +30,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="toolButton_End">
+         <widget class="QToolButton" name="toolButton_Validate">
           <property name="text">
            <string>Validate</string>
           </property>
@@ -76,6 +76,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_as"/>
@@ -115,6 +116,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>About...</string>
+   </property>
+  </action>
+  <action name="actionNew">
+   <property name="text">
+    <string>New</string>
    </property>
   </action>
  </widget>
