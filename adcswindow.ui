@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="editorTab">
        <attribute name="title">
@@ -129,17 +129,9 @@
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
-        <string>Page</string>
+        <string>Graph</string>
        </attribute>
-       <layout class="QVBoxLayout" name="workArea" stretch="0,1">
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab">
-       <attribute name="title">
-        <string>Page</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="workArea" stretch="0,1">
-       </layout>
+       <layout class="QVBoxLayout" name="workArea" stretch=""/>
       </widget>
      </widget>
     </item>
