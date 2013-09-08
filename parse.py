@@ -1,14 +1,6 @@
 
 from consts import *
 
-from collections import namedtuple
-
-Control = namedtuple('Control', ['type'])
-Signal = namedtuple('Signal', ['name', 'index'])
-Output = namedtuple('Output', ['childs'])
-Condition = namedtuple('Condition', ['childs'])
-Jump = namedtuple('Jump', ['dir', 'index'])
-
 STATE_START = "start"
 STATE_END = "end"
 STATE_EXPR_START = "exprstart"
@@ -51,7 +43,7 @@ def lca_machine():
             elif state == STATE_Y_READ:
                 nodetype = Output
             
-            signal = Signal(name=node[0], index=int(node[1:]))
+            signal = Signal(name=node[0], index=int(node[1:]), inverted=False)
 
             if INGROUP:
                 grouped_node.append(signal)
@@ -61,13 +53,13 @@ def lca_machine():
                     assert_b(INGROUP_TYPE[0] == nodetype, "combinations of signals not allowed")
                 return None
             else:
-                return nodetype(childs=[signal])
+                return nodetype(signals=[signal])
 
         elif state in [STATE_UP_READ, STATE_DOWN_READ]:
             return Jump(dir=node[0], index=int(node[1:]))
 
         elif state == STATE_GROUP_END:
-            return INGROUP_TYPE[0](childs=grouped_node)
+            return INGROUP_TYPE[0](signals=grouped_node)
 
     while True:
         if val == SYMB_END:

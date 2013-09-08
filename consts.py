@@ -1,3 +1,19 @@
+from collections import namedtuple
+from functools import partial
+
+# Nodes
+
+Control = namedtuple('Control', ['type'])
+Signal = namedtuple('Signal', ['name', 'index', 'inverted'])
+Node = namedtuple('Node', ['type', 'signals'])
+Output = partial(Node, type='out')
+Condition = partial(Node, type='in')
+Jump = namedtuple('Jump', ['dir', 'index'])
+
+CertainNode = namedtuple('CertainNode', ['id', 'nodeid', 'node'])
+
+# Unicode symbols
+
 SUPERSCRIPT = {
     0: 0x2070,
     1: 0xB9,
