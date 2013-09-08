@@ -2,8 +2,13 @@ import string
 
 from PyQt4 import uic
 from PyQt4 import QtCore, QtGui
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import networkx as nx
 
 import analysis
+import parse
+import graph
 from consts import *
 
 (Ui_ADCSWindow, QMainWindow) = uic.loadUiType('adcswindow.ui')
@@ -18,16 +23,53 @@ def lower_index(num):
     return unichr(symbol_index)
 
 
+class MyMplCanvas(FigureCanvas):
+    """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
+    def __init__(self, parent=None, width=4, height=4, dpi=70):
+        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = self.fig.add_subplot(111)
+        # We want the axes cleared every time plot() is called
+        self.axes.hold(False)
+        self.graph = None
+
+        self.compute_initial_figure()
+
+        #
+        FigureCanvas.__init__(self, self.fig)
+        self.setParent(parent)
+
+        FigureCanvas.setSizePolicy(self,
+                                   QtGui.QSizePolicy.Expanding,
+                                   QtGui.QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
+
+    def compute_initial_figure(self):
+        pass
+
+
+class MyStaticMplCanvas(MyMplCanvas):
+    """Simple canvas with a sine plot."""
+    def compute_initial_figure(self):
+        if not self.graph:
+            G=nx.path_graph(0)
+            pos=nx.spring_layout(G)
+            nx.draw(G,pos,ax=self.axes)
+        else:
+            p = self.graph
+            graph.draw_graph(p.barenodes, p.connections, ax=self.axes)
+
+
 class ADCSWindow (QMainWindow):
     """ADCSWindow inherits QMainWindow"""
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
         self.ui = Ui_ADCSWindow()
         self.ui.setupUi(self)
-        self.connect(self.ui.toolButton_Start,
-                     QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
-        self.connect(self.ui.toolButton_Validate,
-                     QtCore.SIGNAL('clicked()'), QtCore.SLOT('validate()'))
+        self.canvas = MyStaticMplCanvas(self)
+        self.ui.innerLayout.addWidget(self.canvas)
+        # self.connect(self.ui.toolButton_Start,
+        #              QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
+        self.ui.actionAnalyse.triggered.connect(self.validate)
         self.ui.textEdit.installEventFilter(self)
 
     def __del__(self):
@@ -42,9 +84,30 @@ class ADCSWindow (QMainWindow):
 
     @QtCore.pyqtSlot()
     def validate(self):
-        src = self.ui.textEdit.toPlainText().toUtf8()
+        src = str(self.ui.textEdit.toPlainText().toUtf8()).decode('utf-8')
         print src
-        analysis.validate(src)
+        try:
+            p = analysis.LSAAnalyser(parse.parse(src))
+            p.analysis()
+        except analysis.LSAAlgorithmError, e:
+            self.ui.statusBar.showMessage("Algorithm error:" + e.message)
+            return
+        except parse.LSASyntaxError, e:
+            if hasattr(e, "pos"):
+                self.ui.textEdit.moveCursor(QtGui.QTextCursor.StartOfLine)
+                for i in range(e.pos):
+                    self.ui.textEdit.moveCursor(QtGui.QTextCursor.Right)
+                self.ui.textEdit.moveCursor(QtGui.QTextCursor.Left, QtGui.QTextCursor.KeepAnchor)
+            self.ui.statusBar.showMessage("Syntax error " + e.message)
+            return
+        print "OK"
+        self.ui.statusBar.showMessage("OK")
+        self.canvas.graph = p
+        self.canvas.compute_initial_figure()
+        self.canvas.fig.canvas.draw()
+
+        # table
+        self.ui.info.setPlainText("Input signals: %d\nOutput signals: %d" % (len(p.in_signals), len(p.out_signals)))
 
     def _prevSymbol(self):
         store_cursor = self.ui.textEdit.textCursor()

@@ -18,7 +18,10 @@ class LSASyntaxError(Exception):
 
 def assert_s(val, lst):
     if val not in lst:
-        msg = u"%s not in %s" % (ord(val), [ord(x) for x in lst])
+        if val:
+            msg = u"%s not in %s" % (ord(val), [ord(x) for x in lst])
+        else:
+            msg = "empty input expected " + str([ord(x) for x in lst])
         raise LSASyntaxError(msg)
 
 def assert_b(boolean, message="assertion failed"):
@@ -42,7 +45,8 @@ def lca_machine():
                 nodetype = Condition
             elif state == STATE_Y_READ:
                 nodetype = Output
-            
+
+            assert_b(len(node) > 1 and node[1:].isdigit(), "no index at signal")
             signal = Signal(name=node[0], index=int(node[1:]), inverted=False)
 
             if INGROUP:
@@ -56,13 +60,16 @@ def lca_machine():
                 return nodetype(signals=[signal])
 
         elif state in [STATE_UP_READ, STATE_DOWN_READ]:
+            assert_b(len(node) > 1, "no index at arrow")
             return Jump(dir=node[0], index=int(node[1:]))
 
         elif state == STATE_GROUP_END:
             return INGROUP_TYPE[0](signals=grouped_node)
 
+    node = None
     while True:
         if val == SYMB_END:
+            assert_b(node, "empty algorithm")
             ret = return_value(node, STATE)
             yield ret
             break
@@ -99,9 +106,12 @@ def lca_machine():
             INGROUP = False
 
         elif STATE in elementary_node_states:
-            assert_s(val, SUBSCRIPT_symbols + START_SYMBOLS)
+            assert_s(val, SUBSCRIPT_symbols + SUPERSCRIPT_symbols + START_SYMBOLS)
             if val not in START_SYMBOLS:
-                node += str(SUBSCRIPT_symbols.index(val))
+                if val in SUBSCRIPT_symbols:
+                    node += str(SUBSCRIPT_symbols.index(val))
+                else:
+                    node += str(SUPERSCRIPT_symbols.index(val))                   
             else:
                 # end of reading signal
                 ret = return_value(node, STATE)
@@ -116,6 +126,12 @@ def lca_machine():
 
 
 def parse(src):
+    print "PARSING " + src
+    for c in src:
+        print c, ord(c)
+    assert_b(len(src), "empty input")
+    assert_b(src[0] == SYMB_START, "no start symbol")
+    assert_b(src[-1] == SYMB_END, "no end symbol")
     machine = lca_machine()
     machine.next()
     parsed = []
@@ -125,9 +141,13 @@ def parse(src):
             if r:
                 parsed.append(r)
         except LSASyntaxError, e:
-            raise LSASyntaxError("at %d: " % n + e.message)
+            err = LSASyntaxError("at %d: " % n + e.message)
+            err.pos = n
+            raise err
         except StopIteration:
-            raise LSASyntaxError("at %d: unexpected symbol" % n)
+            err = LSASyntaxError("at %d: unexpected symbol" % n)
+            err.pos = n
+            raise err
     try:
         machine.next()
     except StopIteration:

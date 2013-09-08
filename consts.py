@@ -12,6 +12,24 @@ Jump = namedtuple('Jump', ['dir', 'index'])
 
 CertainNode = namedtuple('CertainNode', ['id', 'nodeid', 'node'])
 
+
+def nodename(node, nodes):
+    n = nodes[node].node
+    if type(n) is Control:
+        return n.type
+    else:
+        return ''.join([s.name + (str(s.index)) for s in n.signals])
+
+def nodename_n(n):
+    if type(n) is Control:
+        return n.type
+    else:
+        return ''.join([s.name + (str(s.index)) for s in n.signals])
+
+def conditionname(cond):
+    return ''.join([('!' if s.inverted else '') + s.name + (str(s.index)) for s in cond])
+
+
 # Unicode symbols
 
 SUPERSCRIPT = {
@@ -43,6 +61,12 @@ SUBSCRIPT = {
 }
 
 SUBSCRIPT_symbols = [unichr(x) for x in SUBSCRIPT.values()]
+
+def subscript_num(n):
+    r = []
+    for c in n:
+        r.append(unichr(SUBSCRIPT[int(c)]))
+    return ''.join(r)
 
 ARROW_UP = unichr(0x2191)
 ARROW_DOWN = unichr(0x2193)
