@@ -1,10 +1,9 @@
 import string
 import pickle
+import os
 
 from PyQt4 import uic
 from PyQt4 import QtCore, QtGui
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 import networkx as nx
 
 import analysis
@@ -13,6 +12,8 @@ import graph
 from consts import *
 
 (Ui_ADCSWindow, QMainWindow) = uic.loadUiType('adcswindow.ui')
+
+IMG_PATH = os.getcwd() + "/graph.png"
 
 def upper_index(num):
     symbol_index = SUPERSCRIPT[num]
@@ -24,40 +25,40 @@ def lower_index(num):
     return unichr(symbol_index)
 
 
-class MyMplCanvas(FigureCanvas):
-    """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-    def __init__(self, parent=None, width=4, height=4, dpi=70):
-        self.fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = self.fig.add_subplot(111)
-        # We want the axes cleared every time plot() is called
-        self.axes.hold(False)
-        self.graph = None
+# class MyMplCanvas(FigureCanvas):
+#     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
+#     def __init__(self, parent=None, width=4, height=4, dpi=70):
+#         self.fig = Figure(figsize=(width, height), dpi=dpi)
+#         self.axes = self.fig.add_subplot(111)
+#         # We want the axes cleared every time plot() is called
+#         self.axes.hold(False)
+#         self.graph = None
 
-        self.compute_initial_figure()
+#         self.compute_initial_figure()
 
-        #
-        FigureCanvas.__init__(self, self.fig)
-        self.setParent(parent)
+#         #
+#         FigureCanvas.__init__(self, self.fig)
+#         self.setParent(parent)
 
-        FigureCanvas.setSizePolicy(self,
-                                   QtGui.QSizePolicy.Expanding,
-                                   QtGui.QSizePolicy.Expanding)
-        FigureCanvas.updateGeometry(self)
+#         FigureCanvas.setSizePolicy(self,
+#                                    QtGui.QSizePolicy.Expanding,
+#                                    QtGui.QSizePolicy.Expanding)
+#         FigureCanvas.updateGeometry(self)
 
-    def compute_initial_figure(self):
-        pass
+#     def compute_initial_figure(self):
+#         pass
 
 
-class MyStaticMplCanvas(MyMplCanvas):
-    """Simple canvas with a sine plot."""
-    def compute_initial_figure(self):
-        if not self.graph:
-            G=nx.path_graph(0)
-            pos=nx.spring_layout(G)
-            nx.draw(G,pos,ax=self.axes)
-        else:
-            p = self.graph
-            graph.draw_graph(p.barenodes, p.connections, ax=self.axes)
+# class MyStaticMplCanvas(MyMplCanvas):
+#     """Simple canvas with a sine plot."""
+#     def compute_initial_figure(self):
+#         if not self.graph:
+#             G=nx.path_graph(0)
+#             pos=nx.spring_layout(G)
+#             nx.draw(G,pos,ax=self.axes)
+#         else:
+#             p = self.graph
+#             graph.draw_graph(p.barenodes, p.connections, ax=self.axes)
 
 
 class MatrixModel(QtCore.QAbstractTableModel):
@@ -102,8 +103,20 @@ class ADCSWindow (QMainWindow):
         QMainWindow.__init__(self, parent)
         self.ui = Ui_ADCSWindow()
         self.ui.setupUi(self)
-        self.canvas = MyStaticMplCanvas(self)
-        self.ui.graphViewTab.addWidget(self.canvas)
+
+        pic = QtGui.QLabel(self)
+        # pic.setGeometry(10, 10, 400, 100)
+        self.canvas = pic
+        pic.setScaledContents(True)
+        pic.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
+
+        scrollArea = QtGui.QScrollArea(self)
+        scrollArea.setBackgroundRole(QtGui.QPalette.Dark)
+        scrollArea.setWidget(pic)
+
+        self.ui.innerLayout.addWidget(scrollArea)
+        self.ui.innerLayout.setStretch(0,2)
+        self.ui.innerLayout.setStretch(1,1)
         # self.connect(self.ui.toolButton_Start,
         #              QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
         self.ui.actionAnalyse.triggered.connect(self.validate)
@@ -112,7 +125,8 @@ class ADCSWindow (QMainWindow):
         self.ui.actionOpen_alg.triggered.connect(self.open_alg)
         self.ui.actionOpen_bin.triggered.connect(self.open_bin)
         self.ui.textEdit.installEventFilter(self)
-        # self.ui.graphTab.enabled = False
+        if os.path.exists(IMG_PATH):
+            os.remove(IMG_PATH)
         self.ui.textEdit.setPlainText(u'\u25cbX\u2081\u2191\xb9Y\u2081Y\u2082\u2193\xb9Y\u2083\u25cf')
         self.model = None
         self._updateMode()
@@ -122,12 +136,17 @@ class ADCSWindow (QMainWindow):
 
     def _updateMode(self):
         # import ipydb; ipydb.db()
-        self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.graphTab), bool(self.model))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.modelTab), bool(self.model))
+        #use full ABSOLUTE path to the image, not relative
         if self.model:
             self._fill_signals()
             self._update_graph()
             self.ui.info.setPlainText("Input signals: %d\nOutput signals: %d" % (len(self.model.in_signals), len(self.model.out_signals)))
+            graph.draw_graph(self.model.barenodes, self.model.connections)
+        if os.path.exists(IMG_PATH):
+            self.canvas.setPixmap(QtGui.QPixmap(IMG_PATH))
+            self.canvas.adjustSize()
+
 
     def open_alg(self):
         fname = QtGui.QFileDialog.getOpenFileName(self, 'Open Algorithm', '', 
@@ -210,13 +229,16 @@ class ADCSWindow (QMainWindow):
     def _update_graph(self):
         self.canvas.graph = self.model
         self.log("Drawing...", False)
-        self.canvas.compute_initial_figure()
+        if os.path.exists(IMG_PATH):
+            self.canvas.setPixmap(QtGui.QPixmap(IMG_PATH))
         self.log("OK")
-        self.canvas.fig.canvas.draw()
+        self.log(str(self.model.connections))
 
     @QtCore.pyqtSlot()
     def validate(self):
         self.clear_log()
+        if os.path.exists(IMG_PATH):
+            os.remove(IMG_PATH)
         src = str(self.ui.textEdit.toPlainText().toUtf8()).decode('utf-8')
         self.log("Processing %s" % src)
         try:
@@ -225,6 +247,7 @@ class ADCSWindow (QMainWindow):
         except analysis.LSAAlgorithmError, e:
             self.ui.statusBar.showMessage("Algorithm error:" + e.message)
             self.log("Failed\nAlgorithm error:" + e.message)
+            self.ui.info.setPlainText("Algorithm error:" + e.message)
             return
         except parse.LSASyntaxError, e:
             if hasattr(e, "pos"):
@@ -234,6 +257,7 @@ class ADCSWindow (QMainWindow):
                 self.ui.textEdit.moveCursor(QtGui.QTextCursor.Left, QtGui.QTextCursor.KeepAnchor)
             self.ui.statusBar.showMessage("Syntax error " + e.message)
             self.log("Failed\Syntax error:" + e.message)
+            self.ui.info.setPlainText("Syntax error:" + e.message)
             return
         print "OK"
         self.ui.statusBar.showMessage("OK")

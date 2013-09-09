@@ -95,12 +95,6 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="graphTab">
-       <attribute name="title">
-        <string>Graph View</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="graphViewTab" />
-      </widget>
       <widget class="QWidget" name="modelTab">
        <property name="enabled">
         <bool>true</bool>

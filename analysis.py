@@ -64,7 +64,8 @@ class LSAAnalyser(object):
                         print "repeat ", (stack[-1].nodeid, curr.nodeid, condition)
                         no_depth = True
                         # raise LSAAlgorithmError("repeat")
-                    self.connections.append((stack[-1].nodeid, curr.nodeid, condition))
+                    if (stack[-1].nodeid, curr.nodeid, condition) not in self.connections:
+                        self.connections.append((stack[-1].nodeid, curr.nodeid, condition))
                     self.connections_q.append((stack[-1].nodeid, curr.nodeid))
                     stack.pop()
             if not no_depth:

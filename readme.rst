@@ -3,9 +3,10 @@ Dependencies
 
 pip
 ----------
-matplotlib
+#matplotlib
 pyqt4
-networkx
+#networkx
+pydot
 
 apps
 ----------
