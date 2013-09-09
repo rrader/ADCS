@@ -14,7 +14,7 @@
    <string>Form1</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,1">
+   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="5,2">
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="tabPosition">

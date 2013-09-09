@@ -272,7 +272,7 @@ class ADCSWindow (QMainWindow):
         except parse.LSASyntaxError, e:
             if hasattr(e, "pos"):
                 self.ui.textEdit.moveCursor(QtGui.QTextCursor.StartOfLine)
-                for i in range(e.pos):
+                for i in range(e.pos + 1):
                     self.ui.textEdit.moveCursor(QtGui.QTextCursor.Right)
                 self.ui.textEdit.moveCursor(QtGui.QTextCursor.Left, QtGui.QTextCursor.KeepAnchor)
             self.ui.statusBar.showMessage("Syntax error " + e.message)
