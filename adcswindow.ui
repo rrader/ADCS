@@ -24,7 +24,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="usesScrollButtons">
        <bool>true</bool>
@@ -95,12 +95,18 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>Graph View</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="graphViewTab" />
+      </widget>
       <widget class="QWidget" name="graphTab">
        <property name="enabled">
         <bool>true</bool>
        </property>
        <attribute name="title">
-        <string>Graph</string>
+        <string>Model</string>
        </attribute>
        <layout class="QVBoxLayout" name="tab_2_layout">
         <item>

@@ -66,7 +66,7 @@ class ADCSWindow (QMainWindow):
         self.ui = Ui_ADCSWindow()
         self.ui.setupUi(self)
         self.canvas = MyStaticMplCanvas(self)
-        self.ui.innerLayout.addWidget(self.canvas)
+        self.ui.graphViewTab.addWidget(self.canvas)
         # self.connect(self.ui.toolButton_Start,
         #              QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
         self.ui.actionAnalyse.triggered.connect(self.validate)
@@ -129,8 +129,6 @@ class ADCSWindow (QMainWindow):
         self.ui.listNodes.clear()
         nodes = sorted([nodename(k, {k: x}) for k,x in p.barenodes.iteritems()])
         self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
-
-        print dir(self.ui.matrix) #.setRowCount(10)
 
         self.canvas.graph = p
         print p.connections

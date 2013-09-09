@@ -15,19 +15,6 @@ class LSAAnalyser(object):
     def __init__(self, parsed):
         self.parsed = parsed
 
-    def lca_machine(self):
-        STATE = None
-        val = yield
-        pushback = False
-        ret = None
-
-        while True:
-            if not pushback:
-                val = yield ret
-                ret = None
-
-            pushback = False
-
     def signal_sanity_check(self, lst):
         indexes = {x.index for x in lst}
         if len(lst) == 0:
@@ -49,7 +36,7 @@ class LSAAnalyser(object):
     def _invert(self, signals):
         return [Signal(name=x.name, index=x.index, inverted=not x.inverted) for x in signals]
 
-    def _make(self, start, stack, condition):
+    def _make(self, start, stack, full_stack, condition):
         if start >= len(self.enumerated): return
         if start == 0:
             self.connections = []
@@ -58,20 +45,30 @@ class LSAAnalyser(object):
         # print "* ", start, stack
 
         curr = self.enumerated[start]
+        # raise LSAAlgorithmError("ALREADY WAS HERE")
         if type(curr) is CertainNode:
             print ">> node. ", curr
+            no_depth = False
             if len(stack):
-                assert_b(type(stack[-1].node) is Control or stack[-1].node.type == 'out',
+                assert_b(type(stack[-1].node) is Control or
+                    (type(stack[-1].node) is Node and stack[-1].node.type == 'out'),
                     'expected jump after input node')
                 if type(curr.node) is Control or curr.node.type == 'out':
                     print r"%%", (stack[-1], curr), condition
                     assert_b(((stack[-1].nodeid, curr.nodeid) not in self.connections_q) ==
                         ((stack[-1].nodeid, curr.nodeid, condition) not in self.connections),
                         "two ways from %s to %s" % (nodename_n(stack[-1].node), nodename_n(curr.node)))
+                    if ((stack[-1].nodeid, curr.nodeid) in self.connections_q) and \
+                        ((stack[-1].nodeid, curr.nodeid, condition) in self.connections):
+                        # repeat
+                        print "repeat ", (stack[-1].nodeid, curr.nodeid, condition)
+                        no_depth = True
+                        # raise LSAAlgorithmError("repeat")
                     self.connections.append((stack[-1].nodeid, curr.nodeid, condition))
                     self.connections_q.append((stack[-1].nodeid, curr.nodeid))
                     stack.pop()
-            self._make(start + 1, stack + [curr], [])
+            if not no_depth:
+                self._make(start + 1, stack + [curr], full_stack + [curr], [])
 
         elif type(curr) is Jump and curr.dir == ARROW_UP:
             print ">> jump. ", stack
@@ -82,20 +79,21 @@ class LSAAnalyser(object):
                 stack.pop()
 
                 # print "==> ", start + 1, self.jump_down[curr.index]
-                self._make(start + 1, stack[:], cond)
+                self._make(start + 1, stack[:], full_stack + [curr], cond)
                 assert_b(curr.index in self.jump_down, "no [%d] down arrow" % curr.index)
-                self._make(self.jump_down[curr.index], stack[:], self._invert(cond))
+                self._make(self.jump_down[curr.index], stack[:], full_stack + [curr], self._invert(cond))
             else:
                 # print "==> ", self.jump_down[curr.index]
                 assert_b(curr.index in self.jump_down, "no [%d] down arrow" % curr.index)
-                self._make(self.jump_down[curr.index], stack[:], cond)
+                self._make(self.jump_down[curr.index], stack[:], full_stack + [curr], cond)
             # if type(stack[-1])
         elif type(curr) is Jump and curr.dir == ARROW_DOWN:
             # pass it by
             # print "pass"
-            self._make(start + 1, stack[:], condition)
+            self._make(start + 1, stack[:], full_stack + [curr], condition)
         else:
             print "wtf: ", curr
+            raise LSAAlgorithmError("WTF")
 
     def _build_table(self):
         # build matrix of connectivity
@@ -147,7 +145,7 @@ class LSAAnalyser(object):
             if type(s) == Jump and s.dir == ARROW_DOWN:
                 self.jump_down[s.index] = i
 
-        self._make(0, [], [])
+        self._make(0, [], [], [])
         self._build_table()
 
 
