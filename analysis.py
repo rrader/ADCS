@@ -13,7 +13,7 @@ def assert_b(boolean, message="assertion failed"):
         raise LSAAlgorithmError(message)
 
 
-class LSAAnalyser(QtCore.QAbstractTableModel):
+class LSAAnalyser(object):
     def __init__(self, parsed):
         self.parsed = parsed
 
@@ -161,4 +161,3 @@ if __name__ == '__main__':
     print
     print "==================="
     print "Reverse build"
-

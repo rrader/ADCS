@@ -1,4 +1,5 @@
 import string
+import pickle
 
 from PyQt4 import uic
 from PyQt4 import QtCore, QtGui
@@ -106,19 +107,39 @@ class ADCSWindow (QMainWindow):
         # self.connect(self.ui.toolButton_Start,
         #              QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
         self.ui.actionAnalyse.triggered.connect(self.validate)
+        self.ui.actionSave_alg.triggered.connect(self.save_alg)
+        self.ui.actionSave_bin.triggered.connect(self.save_bin)
         self.ui.textEdit.installEventFilter(self)
         # self.ui.graphTab.enabled = False
         self.ui.textEdit.setPlainText(u'\u25cbX\u2081\u2191\xb9Y\u2081Y\u2082\u2193\xb9Y\u2083\u25cf')
+        self.model = None
+        self._updateMode()
 
     def __del__(self):
         self.ui = None
 
-    @QtCore.pyqtSlot()
-    def test_unicode(self):
-        self.ui.textEdit.setHtml(u"<font color=red>123</font>" +
-           ARROW_UP.join([upper_index(x) for x in range(0, 10)]) +
-           ARROW_DOWN.join([lower_index(x) for x in range(0, 10)]))
-        print self.ui.textEdit.toPlainText().toUtf8()
+    def _updateMode(self):
+        # import ipydb; ipydb.db()
+        self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.graphTab), bool(self.model))
+        self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.modelTab), bool(self.model))
+
+    def save_alg(self):
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save Algorithm', '', 
+                "Algorithm .txt (*.txt)")
+        if fname:
+            with open(fname, 'w') as f:
+                src = str(self.ui.textEdit.toPlainText().toUtf8()).decode('utf-8')
+                f.write(src.encode('UTF-8'))
+
+    def save_bin(self):
+        if self.model:
+            fname = QtGui.QFileDialog.getSaveFileName(self, 'Save Algorithm Model', '', 
+                    "Algorithm Model .alg (*.alg)")
+            if fname:
+                with open(fname, 'w') as f:
+                    pickle.dump(self.model, f)
+        else:
+            QtGui.QMessageBox.about(self, "Can't save", "Analyse your algorithm first")
 
     def clear_log(self):
         self.ui.log.setPlainText(u"")
@@ -195,6 +216,7 @@ class ADCSWindow (QMainWindow):
 
         # table
         self.ui.info.setPlainText("Input signals: %d\nOutput signals: %d" % (len(p.in_signals), len(p.out_signals)))
+        self._updateMode()
 
     def _prevSymbol(self):
         store_cursor = self.ui.textEdit.textCursor()
