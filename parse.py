@@ -19,7 +19,7 @@ class LSASyntaxError(Exception):
 def assert_s(val, lst):
     if val not in lst:
         if val:
-            msg = u"%s not in %s" % (ord(val), [ord(x) for x in lst])
+            msg = u"unexpected symbol: %s not in [%s]" % (val, ''.join([unicode(x) for x in lst]))
         else:
             msg = "empty input expected " + str([ord(x) for x in lst])
         raise LSASyntaxError(msg)
