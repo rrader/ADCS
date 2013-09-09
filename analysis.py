@@ -68,25 +68,27 @@ class LSAAnalyser(object):
                         self.connections.append((stack[-1].nodeid, curr.nodeid, condition))
                     self.connections_q.append((stack[-1].nodeid, curr.nodeid))
                     stack.pop()
+                    condition = []
             if not no_depth:
-                self._make(start + 1, stack + [curr], full_stack + [curr], [])
+                print "!!!!", condition
+                self._make(start + 1, stack + [curr], full_stack + [curr], condition)
 
         elif type(curr) is Jump and curr.dir == ARROW_UP:
-            print ">> jump. ", stack
-            cond = condition
+            print ">> jump. ", stack, condition
+            cond = []
             if stack[-1].node.type == "in":
                 cond = cond + stack[-1].node.signals
                 # print ".. cond ", cond
                 stack.pop()
 
                 # print "==> ", start + 1, self.jump_down[curr.index]
-                self._make(start + 1, stack[:], full_stack + [curr], cond)
+                self._make(start + 1, stack[:], full_stack + [curr], condition + cond)
                 assert_b(curr.index in self.jump_down, "no [%d] down arrow" % curr.index)
-                self._make(self.jump_down[curr.index], stack[:], full_stack + [curr], self._invert(cond))
+                self._make(self.jump_down[curr.index], stack[:], full_stack + [curr], condition + self._invert(cond))
             else:
                 # print "==> ", self.jump_down[curr.index]
                 assert_b(curr.index in self.jump_down, "no [%d] down arrow" % curr.index)
-                self._make(self.jump_down[curr.index], stack[:], full_stack + [curr], cond)
+                self._make(self.jump_down[curr.index], stack[:], full_stack + [curr], condition + cond)
             # if type(stack[-1])
         elif type(curr) is Jump and curr.dir == ARROW_DOWN:
             # pass it by
