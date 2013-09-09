@@ -15,10 +15,11 @@ CertainNode = namedtuple('CertainNode', ['id', 'nodeid', 'node'])
 
 def nodename(node, nodes):
     n = nodes[node].node
+    s = "%d." % nodes[node].nodeid
     if type(n) is Control:
-        return n.type
+        return s + n.type
     else:
-        return ''.join([s.name + (str(s.index)) for s in n.signals])
+        return s + ''.join([s.name + (str(s.index)) for s in n.signals])
 
 def nodename_n(n):
     if type(n) is Control:
@@ -26,8 +27,11 @@ def nodename_n(n):
     else:
         return ''.join([s.name + (str(s.index)) for s in n.signals])
 
-def conditionname(cond):
-    return ''.join([('!' if s.inverted else '') + s.name + (str(s.index)) for s in cond])
+def conditionname(cond, uncond=False):
+    s = ''.join([('!' if s.inverted else '') + s.name + (str(s.index)) for s in cond])
+    if uncond and not s:
+        s = '+'
+    return s
 
 
 # Unicode symbols

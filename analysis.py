@@ -97,7 +97,12 @@ class LSAAnalyser(object):
         else:
             print "wtf: ", curr
 
-
+    def _build_table(self):
+        # build matrix of connectivity
+        self.matrix = [[None for y in self.barenodes] for x in self.barenodes]
+        for c in self.connections:
+            self.matrix[c[0]-1][c[1]-1] = c[2]
+        # print matrix
 
     def analysis(self):
         self.enumerated = []
@@ -115,8 +120,8 @@ class LSAAnalyser(object):
             else:
                 self.enumerated.append(s)
 
-        self.out_signals = list(chain(*[e.signals for e in self.parsed if type(e) is Node and e.type=='out']))
-        self.in_signals = list(chain(*[e.signals for e in self.parsed if type(e) is Node and e.type=='in']))
+        self.out_signals = list(set(chain(*[e.signals for e in self.parsed if type(e) is Node and e.type=='out'])))
+        self.in_signals = list(set(chain(*[e.signals for e in self.parsed if type(e) is Node and e.type=='in'])))
         self.arrow_up = [e for e in self.parsed if type(e) is Jump and e.dir==ARROW_UP]
         self.arrow_down = [e for e in self.parsed if type(e) is Jump and e.dir==ARROW_DOWN]
         self.signal_sanity_check(self.out_signals)
@@ -143,6 +148,7 @@ class LSAAnalyser(object):
                 self.jump_down[s.index] = i
 
         self._make(0, [], [])
+        self._build_table()
 
 
 if __name__ == '__main__':
@@ -151,3 +157,6 @@ if __name__ == '__main__':
     p = LSAAnalyser(parse(s))
     p.analysis()
     print p.connections
+    print p.barenodes
+    for i in p.matrix:
+        print [x is not None for x in i]

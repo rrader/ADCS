@@ -71,6 +71,8 @@ class ADCSWindow (QMainWindow):
         #              QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
         self.ui.actionAnalyse.triggered.connect(self.validate)
         self.ui.textEdit.installEventFilter(self)
+        # self.ui.graphTab.enabled = False
+        self.ui.textEdit.setPlainText(u'\u25cbX\u2081\u2191\xb9Y\u2081Y\u2082\u2193\xb9Y\u2083\u25cf')
 
     def __del__(self):
         self.ui = None
@@ -82,15 +84,31 @@ class ADCSWindow (QMainWindow):
            ARROW_DOWN.join([lower_index(x) for x in range(0, 10)]))
         print self.ui.textEdit.toPlainText().toUtf8()
 
+    def clear_log(self):
+        self.ui.log.setPlainText(u"")
+
+    def log(self, text, newline=True):
+        if newline:
+            text = text + "\n"
+        self.ui.log.setPlainText(self.ui.log.toPlainText() + text)
+
     @QtCore.pyqtSlot()
     def validate(self):
+        self.clear_log()
         src = str(self.ui.textEdit.toPlainText().toUtf8()).decode('utf-8')
+        self.log("Processing %s" % src)
         print src
         try:
-            p = analysis.LSAAnalyser(parse.parse(src))
+            self.log("Parse... ", False)
+            parsed = parse.parse(src)
+            self.log("OK")
+            self.log("Analyse... ", False)
+            p = analysis.LSAAnalyser(parsed)
             p.analysis()
+            self.log("OK")
         except analysis.LSAAlgorithmError, e:
             self.ui.statusBar.showMessage("Algorithm error:" + e.message)
+            self.log("Failed\nAlgorithm error:" + e.message)
             return
         except parse.LSASyntaxError, e:
             if hasattr(e, "pos"):
@@ -99,11 +117,33 @@ class ADCSWindow (QMainWindow):
                     self.ui.textEdit.moveCursor(QtGui.QTextCursor.Right)
                 self.ui.textEdit.moveCursor(QtGui.QTextCursor.Left, QtGui.QTextCursor.KeepAnchor)
             self.ui.statusBar.showMessage("Syntax error " + e.message)
+            self.log("Failed\Syntax error:" + e.message)
             return
         print "OK"
         self.ui.statusBar.showMessage("OK")
+        
+        self.ui.listSignals.clear()
+        signals = sorted([conditionname([x]) for x in p.in_signals + p.out_signals])
+        self.ui.listSignals.insertItems(0, QtCore.QStringList(signals))
+
+        self.ui.listNodes.clear()
+        nodes = sorted([nodename(k, {k: x}) for k,x in p.barenodes.iteritems()])
+        self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
+
+        print dir(self.ui.matrix) #.setRowCount(10)
+
         self.canvas.graph = p
+        print p.connections
+        print p.barenodes
+        if len(p.barenodes) < 10:
+            matrix = ""
+            for i in p.matrix:
+                matrix += ','.join(["%6s" % (conditionname(x, uncond=True) if x is not None else '-') for x in i]) + "\n"
+            self.log(matrix)
+
+        self.log("Drawing...", False)
         self.canvas.compute_initial_figure()
+        self.log("OK")
         self.canvas.fig.canvas.draw()
 
         # table

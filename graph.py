@@ -8,9 +8,6 @@ import matplotlib
 
 def draw_graph(nodes, connections, ax=None):
     G=nx.DiGraph()
-    for k,v in nodes.iteritems():
-        # print k
-        G.add_node(nodename(k, nodes))
 
     labels = {}
     for conn in connections:
@@ -19,17 +16,12 @@ def draw_graph(nodes, connections, ax=None):
             condition=conn[2])
         labels[pair] = conditionname(conn[2])
 
-    # try: # draw
-    # matplotlib.rc('text',usetex=True)
-
     matplotlib.rc('font', **{'family':'serif','serif':['Computer Modern']})
     pos = nx.graphviz_layout(G, prog='dot', args='-Nfontsize=10 -Nwidth=".2" -Nheight=".2" -Nmargin=0 -Gfontsize=10')
     # pos = nx.spring_layout(G, iterations=10)
     print "OK"
-    nx.draw(G,pos,node_size=2000,alpha=0.6,with_labels=True,edge_color='b',node_color='y',font_size=16,node_shape='s',ax=ax)
+    nx.draw(G,pos,node_size=1600,alpha=0.6,with_labels=True,edge_color='b',node_color='y',font_size=13,node_shape='s',ax=ax)
     nx.draw_networkx_edge_labels(G, pos, labels, label_pos=0.5,rotate=False,ax=ax)
-    # plt.savefig("graph.png")
-    # plt.show()
 
 
 if __name__ == '__main__':
