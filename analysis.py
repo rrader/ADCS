@@ -2,6 +2,8 @@ from consts import *
 from parse import parse
 from itertools import chain
 
+from PyQt4 import QtCore
+
 class LSAAlgorithmError(Exception):
     pass
 
@@ -11,7 +13,7 @@ def assert_b(boolean, message="assertion failed"):
         raise LSAAlgorithmError(message)
 
 
-class LSAAnalyser(object):
+class LSAAnalyser(QtCore.QAbstractTableModel):
     def __init__(self, parsed):
         self.parsed = parsed
 
@@ -41,8 +43,6 @@ class LSAAnalyser(object):
         if start == 0:
             self.connections = []
             self.connections_q = []
-
-        # print "* ", start, stack
 
         curr = self.enumerated[start]
         # raise LSAAlgorithmError("ALREADY WAS HERE")
@@ -158,3 +158,7 @@ if __name__ == '__main__':
     print p.barenodes
     for i in p.matrix:
         print [x is not None for x in i]
+    print
+    print "==================="
+    print "Reverse build"
+

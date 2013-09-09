@@ -59,6 +59,42 @@ class MyStaticMplCanvas(MyMplCanvas):
             graph.draw_graph(p.barenodes, p.connections, ax=self.axes)
 
 
+class MatrixModel(QtCore.QAbstractTableModel):
+    def __init__(self, parent, analyser):
+        QtCore.QAbstractTableModel.__init__(self)
+        self.gui = parent
+        self.analyser = analyser
+        self.node_names = sorted([nodename(k, {k: x}) for k,x in self.analyser.barenodes.iteritems()])
+        self.node_count = len(self.node_names)
+        self.colLabels = self.node_names
+
+    def rowCount(self, parent):
+        return len(self.node_names)
+
+    def columnCount(self, parent):
+        return len(self.node_names)
+
+    def data(self, index, role):
+        if not index.isValid():
+            return QtCore.QVariant()
+        elif role != QtCore.Qt.DisplayRole and role != QtCore.Qt.EditRole:
+            return QtCore.QVariant()
+        value = ''
+        if role == QtCore.Qt.DisplayRole:
+            row = index.row()
+            col = index.column()
+            cond = self.analyser.matrix[row][col]
+            value = conditionname(cond, uncond=True) if cond is not None else '-'
+        return QtCore.QVariant(value)
+
+    def headerData(self, section, orientation, role):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return QtCore.QVariant(self.colLabels[section])
+        if orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
+            return QtCore.QVariant(self.colLabels[section])
+        return QtCore.QVariant()
+
+
 class ADCSWindow (QMainWindow):
     """ADCSWindow inherits QMainWindow"""
     def __init__(self, parent=None):
@@ -92,20 +128,52 @@ class ADCSWindow (QMainWindow):
             text = text + "\n"
         self.ui.log.setPlainText(self.ui.log.toPlainText() + text)
 
+    def _process(self, src):
+        self.log("Parse... ", False)
+        parsed = parse.parse(src)
+        self.log("OK")
+        self.log("Analyse... ", False)
+        p = analysis.LSAAnalyser(parsed)
+        p.analysis()
+        self.log("OK")
+        return p
+
+    def _fill_signals(self):
+        self.ui.listSignals.clear()
+        signals = sorted([conditionname([x]) for x in self.model.in_signals + self.model.out_signals])
+        self.ui.listSignals.insertItems(0, QtCore.QStringList(signals))
+
+        self.ui.listNodes.clear()
+        nodes = sorted([nodename(k, {k: x}) for k,x in self.model.barenodes.iteritems()])
+        self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
+
+        if len(self.model.barenodes) < 10:
+            matrix = ""
+            for i in self.model.matrix:
+                matrix += ','.join(["%6s" % (conditionname(x, uncond=True) if x is not None else '-') for x in i]) + "\n"
+            self.log(matrix)
+
+        # model = QtCode.QStandartItemModel(2,3,self)
+        model = MatrixModel(self.ui.matrix, self.model)
+        self.ui.matrix.setModel(model)
+        self.ui.matrix.resizeColumnsToContents()
+
+
+    def _update_graph(self):
+        self.canvas.graph = self.model
+        self.log("Drawing...", False)
+        self.canvas.compute_initial_figure()
+        self.log("OK")
+        self.canvas.fig.canvas.draw()
+
     @QtCore.pyqtSlot()
     def validate(self):
         self.clear_log()
         src = str(self.ui.textEdit.toPlainText().toUtf8()).decode('utf-8')
         self.log("Processing %s" % src)
-        print src
         try:
-            self.log("Parse... ", False)
-            parsed = parse.parse(src)
-            self.log("OK")
-            self.log("Analyse... ", False)
-            p = analysis.LSAAnalyser(parsed)
-            p.analysis()
-            self.log("OK")
+            p = self._process(src)
+            self.model = p
         except analysis.LSAAlgorithmError, e:
             self.ui.statusBar.showMessage("Algorithm error:" + e.message)
             self.log("Failed\nAlgorithm error:" + e.message)
@@ -122,27 +190,8 @@ class ADCSWindow (QMainWindow):
         print "OK"
         self.ui.statusBar.showMessage("OK")
         
-        self.ui.listSignals.clear()
-        signals = sorted([conditionname([x]) for x in p.in_signals + p.out_signals])
-        self.ui.listSignals.insertItems(0, QtCore.QStringList(signals))
-
-        self.ui.listNodes.clear()
-        nodes = sorted([nodename(k, {k: x}) for k,x in p.barenodes.iteritems()])
-        self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
-
-        self.canvas.graph = p
-        print p.connections
-        print p.barenodes
-        if len(p.barenodes) < 10:
-            matrix = ""
-            for i in p.matrix:
-                matrix += ','.join(["%6s" % (conditionname(x, uncond=True) if x is not None else '-') for x in i]) + "\n"
-            self.log(matrix)
-
-        self.log("Drawing...", False)
-        self.canvas.compute_initial_figure()
-        self.log("OK")
-        self.canvas.fig.canvas.draw()
+        self._fill_signals()
+        self._update_graph()
 
         # table
         self.ui.info.setPlainText("Input signals: %d\nOutput signals: %d" % (len(p.in_signals), len(p.out_signals)))
