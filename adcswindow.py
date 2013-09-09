@@ -109,6 +109,8 @@ class ADCSWindow (QMainWindow):
         self.ui.actionAnalyse.triggered.connect(self.validate)
         self.ui.actionSave_alg.triggered.connect(self.save_alg)
         self.ui.actionSave_bin.triggered.connect(self.save_bin)
+        self.ui.actionOpen_alg.triggered.connect(self.open_alg)
+        self.ui.actionOpen_bin.triggered.connect(self.open_bin)
         self.ui.textEdit.installEventFilter(self)
         # self.ui.graphTab.enabled = False
         self.ui.textEdit.setPlainText(u'\u25cbX\u2081\u2191\xb9Y\u2081Y\u2082\u2193\xb9Y\u2083\u25cf')
@@ -122,6 +124,29 @@ class ADCSWindow (QMainWindow):
         # import ipydb; ipydb.db()
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.graphTab), bool(self.model))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.modelTab), bool(self.model))
+        if self.model:
+            self._fill_signals()
+            self._update_graph()
+            self.ui.info.setPlainText("Input signals: %d\nOutput signals: %d" % (len(self.model.in_signals), len(self.model.out_signals)))
+
+    def open_alg(self):
+        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open Algorithm', '', 
+                "Algorithm .txt (*.txt)")
+        if fname:
+            src = open(fname).read().decode('utf-8')
+            self.ui.textEdit.setPlainText(src)
+            self.model = None
+            self.log("file %s loaded (text)" % fname)
+        self._updateMode()
+
+    def open_bin(self):
+        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open Algorithm Model', '', 
+                "Algorithm Model .alg (*.alg)")
+        if fname:
+            self.model = pickle.load(open(fname))
+            self.ui.textEdit.setPlainText(self.model.source)
+            self._updateMode()
+            self.log("file %s loaded (binary)" % fname)
 
     def save_alg(self):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save Algorithm', '', 
@@ -137,6 +162,8 @@ class ADCSWindow (QMainWindow):
                     "Algorithm Model .alg (*.alg)")
             if fname:
                 with open(fname, 'w') as f:
+                    src = str(self.ui.textEdit.toPlainText().toUtf8()).decode('utf-8')
+                    self.model.source = src
                     pickle.dump(self.model, f)
         else:
             QtGui.QMessageBox.about(self, "Can't save", "Analyse your algorithm first")
@@ -210,12 +237,7 @@ class ADCSWindow (QMainWindow):
             return
         print "OK"
         self.ui.statusBar.showMessage("OK")
-        
-        self._fill_signals()
-        self._update_graph()
 
-        # table
-        self.ui.info.setPlainText("Input signals: %d\nOutput signals: %d" % (len(p.in_signals), len(p.out_signals)))
         self._updateMode()
 
     def _prevSymbol(self):
