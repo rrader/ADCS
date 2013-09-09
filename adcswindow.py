@@ -119,6 +119,7 @@ class ADCSWindow (QMainWindow):
         self.ui.innerLayout.setStretch(1,1)
         # self.connect(self.ui.toolButton_Start,
         #              QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
+        self.ui.actionNew.triggered.connect(self.newDocument)
         self.ui.actionAnalyse.triggered.connect(self.validate)
         self.ui.actionSave_alg.triggered.connect(self.save_alg)
         self.ui.actionSave_bin.triggered.connect(self.save_bin)
@@ -127,22 +128,33 @@ class ADCSWindow (QMainWindow):
         self.ui.textEdit.installEventFilter(self)
         if os.path.exists(IMG_PATH):
             os.remove(IMG_PATH)
-        self.ui.textEdit.setPlainText(u'\u25cbX\u2081\u2191\xb9Y\u2081Y\u2082\u2193\xb9Y\u2083\u25cf')
+        self.ui.textEdit.setPlainText(u'\u25cb\u25cf')
         self.model = None
         self._updateMode()
 
     def __del__(self):
         self.ui = None
 
+    def newDocument(self):
+        reply = QtGui.QMessageBox.question(self, 'Confirm',
+            "You will lose unsaved work", QtGui.QMessageBox.Yes | 
+            QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+
+        if reply == QtGui.QMessageBox.Yes:
+            self.model = None
+            self.ui.textEdit.setPlainText(u'\u25cb\u25cf')
+            self.canvas.clear()
+
     def _updateMode(self):
         # import ipydb; ipydb.db()
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.modelTab), bool(self.model))
         #use full ABSOLUTE path to the image, not relative
+        self._update_graph()
         if self.model:
             self._fill_signals()
-            self._update_graph()
             self.ui.info.setPlainText("Input signals: %d\nOutput signals: %d" % (len(self.model.in_signals), len(self.model.out_signals)))
             graph.draw_graph(self.model.barenodes, self.model.connections)
+
         if os.path.exists(IMG_PATH):
             self.canvas.setPixmap(QtGui.QPixmap(IMG_PATH))
             self.canvas.adjustSize()
@@ -232,7 +244,6 @@ class ADCSWindow (QMainWindow):
         if os.path.exists(IMG_PATH):
             self.canvas.setPixmap(QtGui.QPixmap(IMG_PATH))
         self.log("OK")
-        self.log(str(self.model.connections))
 
     @QtCore.pyqtSlot()
     def validate(self):
