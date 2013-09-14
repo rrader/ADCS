@@ -21,6 +21,14 @@ def nodename(node, nodes):
     else:
         return s + ''.join([s.name + (str(s.index)) for s in n.signals])
 
+def nodename_x(node, nodes):
+    n = nodes[node].node
+    s = "%d." % nodes[node].nodeid
+    if type(n) is Control:
+        return s + '-'
+    else:
+        return s + ''.join([s.name + (str(s.index)) for s in n.signals])
+
 def nodename_n(n):
     if type(n) is Control:
         return n.type

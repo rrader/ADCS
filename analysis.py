@@ -132,7 +132,6 @@ class LSAAnalyser(object):
         arrow_down_indexes = {x.index for x in self.arrow_down}
         assert_b(len(arrow_down_indexes) == len(self.arrow_down), "Several DOWN arrows not allowed!")
 
-
         stack = []
         for s in self.parsed:
             if type(s) is Control and not len(stack):
@@ -151,6 +150,25 @@ class LSAAnalyser(object):
         self._make(0, [], [], [])
         self._build_table()
 
+    def _restore(self, x=0, fr=0):
+        if x == 0:
+            print "start"
+            self.r_arrow_num = 0
+        else:
+            print "DOWN", fr
+
+        self.r_arrow_num += 1
+        for y,el in enumerate(self.matrix[x]):
+            if el is not None:
+                print x, '->', y
+                self.r_arrow_num += 1
+                if len(el):
+                    print el
+                print "UP", self.r_arrow_num
+                self._restore(y, self.r_arrow_num)
+
+    def restore(self):
+        self._restore()
 
 if __name__ == '__main__':
     s = u'\u25cbX\u2081\u2191\u2081(Y\u2081Y\u2082)\u2191\u2082\u2193\u2081Y\u2082\u2193\u2082\u25cf'
@@ -164,3 +182,4 @@ if __name__ == '__main__':
     print
     print "==================="
     print "Reverse build"
+    print p.restore()

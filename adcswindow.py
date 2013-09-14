@@ -232,7 +232,7 @@ class ADCSWindow (QMainWindow):
         self.ui.listSignals.insertItems(0, QtCore.QStringList(signals))
 
         self.ui.listNodes.clear()
-        nodes = sorted([nodename(k, {k: x}) for k,x in self.model.barenodes.iteritems()])
+        nodes = sorted([nodename_x(k, {k: x}) for k,x in self.model.barenodes.iteritems()])
         self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
 
         if len(self.model.barenodes) < 10:
