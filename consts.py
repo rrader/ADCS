@@ -41,6 +41,20 @@ def conditionname(cond, uncond=False):
         s = '+'
     return s
 
+def conditionname_b(cond):
+    if cond is None:
+        value = '0'
+    else:
+        value = '1' if cond else '2'
+    return value
+
+def conditionname_t(cond):
+    if cond is None:
+        value = ''
+    else:
+        value = 'True' if cond else 'False'
+    return value
+
 
 # Unicode symbols
 

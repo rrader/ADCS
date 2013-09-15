@@ -25,42 +25,6 @@ def lower_index(num):
     return unichr(symbol_index)
 
 
-# class MyMplCanvas(FigureCanvas):
-#     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-#     def __init__(self, parent=None, width=4, height=4, dpi=70):
-#         self.fig = Figure(figsize=(width, height), dpi=dpi)
-#         self.axes = self.fig.add_subplot(111)
-#         # We want the axes cleared every time plot() is called
-#         self.axes.hold(False)
-#         self.graph = None
-
-#         self.compute_initial_figure()
-
-#         #
-#         FigureCanvas.__init__(self, self.fig)
-#         self.setParent(parent)
-
-#         FigureCanvas.setSizePolicy(self,
-#                                    QtGui.QSizePolicy.Expanding,
-#                                    QtGui.QSizePolicy.Expanding)
-#         FigureCanvas.updateGeometry(self)
-
-#     def compute_initial_figure(self):
-#         pass
-
-
-# class MyStaticMplCanvas(MyMplCanvas):
-#     """Simple canvas with a sine plot."""
-#     def compute_initial_figure(self):
-#         if not self.graph:
-#             G=nx.path_graph(0)
-#             pos=nx.spring_layout(G)
-#             nx.draw(G,pos,ax=self.axes)
-#         else:
-#             p = self.graph
-#             graph.draw_graph(p.barenodes, p.connections, ax=self.axes)
-
-
 class MatrixModel(QtCore.QAbstractTableModel):
     def __init__(self, parent, analyser):
         QtCore.QAbstractTableModel.__init__(self)
@@ -86,7 +50,7 @@ class MatrixModel(QtCore.QAbstractTableModel):
             row = index.row()
             col = index.column()
             cond = self.analyser.matrix[row][col]
-            value = conditionname(cond, uncond=True) if cond is not None else '-'
+            value = conditionname_b(cond)
         return QtCore.QVariant(value)
 
     def headerData(self, section, orientation, role):
@@ -162,7 +126,7 @@ class ADCSWindow (QMainWindow):
         if self.model:
             self._fill_signals()
             self.ui.info.setPlainText("Input signals: %d\nOutput signals: %d" % (len(self.model.in_signals), len(self.model.out_signals)))
-            graph.draw_graph(self.model.barenodes, self.model.connections)
+            graph.draw_graph(self.model.barenodes, self.model.connections, self.model.matrix)
 
         if os.path.exists(IMG_PATH):
             self.canvas.setPixmap(QtGui.QPixmap(IMG_PATH))
@@ -232,13 +196,13 @@ class ADCSWindow (QMainWindow):
         self.ui.listSignals.insertItems(0, QtCore.QStringList(signals))
 
         self.ui.listNodes.clear()
-        nodes = sorted([nodename_x(k, {k: x}) for k,x in self.model.barenodes.iteritems()])
+        nodes = sorted("%d: %d" % (k,x) for k,x in self.model.signals.iteritems())
         self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
 
         if len(self.model.barenodes) < 10:
             matrix = ""
             for i in self.model.matrix:
-                matrix += ','.join(["%6s" % (conditionname(x, uncond=True) if x is not None else '-') for x in i]) + "\n"
+                matrix += ','.join(["%6s" % (x) for x in i]) + "\n"
             self.log(matrix)
 
         # model = QtCode.QStandartItemModel(2,3,self)

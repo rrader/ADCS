@@ -127,8 +127,8 @@ def lca_machine():
 
 def parse(src):
     print "PARSING " + src
-    for c in src:
-        print c, ord(c)
+    # for c in src:
+    #     print c, ord(c)
     assert_b(len(src), "empty input")
     assert_b(src[0] == SYMB_START, "no start symbol")
     assert_b(src[-1] == SYMB_END, "no end symbol")
