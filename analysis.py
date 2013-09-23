@@ -167,6 +167,7 @@ class LSAAnalyser(object):
         self._make(0)
         self._build_table()
         loops = self.find_infinite_loops()
+        self.loop = None
         if loops:
             node_names = {k:nodename(k, {k: x}) for k,x in self.barenodes.iteritems()}
             loop = '->'.join([node_names[i+1] for i in loops[0]])
@@ -174,6 +175,7 @@ class LSAAnalyser(object):
             warn.tag = 'LOOP'
             warn.loop = loops[0]
             warnings.warn(warn)
+            self.loop = loops[0]
 
     def _restore(self, x=0, fr=0):
         if x == 0:

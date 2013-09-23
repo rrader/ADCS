@@ -4,7 +4,7 @@ from consts import *
 
 import pydot
 
-def draw_graph(nodes, connections, matrix):
+def draw_graph(nodes, connections, matrix, loop):
     G = pydot.Dot('graphname', graph_type='digraph', rankdir='TB', size=100)
     subg = pydot.Subgraph('', rank='same')
     G.add_subgraph(subg)
@@ -19,13 +19,20 @@ def draw_graph(nodes, connections, matrix):
             G.add_node(pydot.Node(nodename(k, {k:node}), shape='diamond'))
 
     # labels = {}
+    highlighted = []
+    if loop:
+        highlighted = zip(loop, loop[1:])
     for conn in connections:
+        if (conn[0]-1, conn[1]-1) in highlighted:
+            color = 'red'
+        else:
+            color = 'black'
         pair = nodename(conn[0], nodes), nodename(conn[1], nodes)
         outputs = len(filter(lambda x: x is not None, matrix[conn[0]-1]))
         if conn[2] is None or outputs <= 1:
-            G.add_edge(pydot.Edge(*pair))
+            G.add_edge(pydot.Edge(*pair, color=color))
         else:
-            G.add_edge(pydot.Edge(*pair, label=conditionname_t(conn[2])))
+            G.add_edge(pydot.Edge(*pair, label=conditionname_t(conn[2]), color=color))
 
     G.write_png('graph.png')
     print "image write"

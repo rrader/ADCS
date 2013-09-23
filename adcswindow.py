@@ -128,7 +128,7 @@ class ADCSWindow (QMainWindow):
             self._fill_signals()
             txt = self.ui.info.toPlainText()
             self.ui.info.setPlainText("%s\nInput signals: %d\nOutput signals: %d" % (txt, len(self.model.in_signals), len(self.model.out_signals)))
-            graph.draw_graph(self.model.barenodes, self.model.connections, self.model.matrix)
+            graph.draw_graph(self.model.barenodes, self.model.connections, self.model.matrix, loop=self.model.loop)
 
         if os.path.exists(IMG_PATH):
             self.canvas.setPixmap(QtGui.QPixmap(IMG_PATH))

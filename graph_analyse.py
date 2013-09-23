@@ -25,13 +25,16 @@ def find_paths(matrix):
     g = _find_paths(matrix)
     return [path for path in g if path[-1] not in path[:-1]]
 
+def loop_from_looppath(loop_path):
+    return loop_path[loop_path.index(loop_path[-1]):]
+
 def _find_infinite_loops(matrix):
     loops_g = _find_paths(matrix)
     is_node = lambda k: len(filter(lambda x: x is not None, matrix[k])) <= 1
     for loop_path in loops_g:
-        loop = loop_path[loop_path.index(loop_path[-1]):]
+        loop = loop_from_looppath(loop_path)
         if is_loop(loop_path) and all(map(is_node, loop)):
-            yield loop_path
+            yield loop
 
 def find_infinite_loops(matrix):
     loops = _find_infinite_loops(matrix)
