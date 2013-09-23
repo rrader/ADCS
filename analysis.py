@@ -1,10 +1,15 @@
 from consts import *
 from parse import parse
-from itertools import chain
+import graph_analyse
 
+import warnings
+from itertools import chain
 from PyQt4 import QtCore
 
 class LSAAlgorithmError(Exception):
+    pass
+
+class LSAAlgorithmWarning(Warning):
     pass
 
 def assert_b(boolean, message="assertion failed"):
@@ -161,6 +166,14 @@ class LSAAnalyser(object):
 
         self._make(0)
         self._build_table()
+        loops = self.find_infinite_loops()
+        if loops:
+            node_names = {k:nodename(k, {k: x}) for k,x in self.barenodes.iteritems()}
+            loop = '->'.join([node_names[i+1] for i in loops[0]])
+            warn = LSAAlgorithmWarning("Loop found! %s" % loop)
+            warn.tag = 'LOOP'
+            warn.loop = loops[0]
+            warnings.warn(warn)
 
     def _restore(self, x=0, fr=0):
         if x == 0:
@@ -182,16 +195,24 @@ class LSAAnalyser(object):
     def restore(self):
         self._restore()
 
+    def find_loops(self):
+        return graph_analyse.find_loops(self.matrix)
+
+    def find_infinite_loops(self):
+        return graph_analyse.find_infinite_loops(self.matrix)
+
+    def find_paths(self):
+        return graph_analyse.find_paths(self.matrix)
+
+
 if __name__ == '__main__':
-    s = u'\u25cbY\u2081X\u2081\u2191\xb9Y\u2082\u2193\xb9X\u2082\u2191\xb2Y\u2083\u2193\xb2\u2191\xb9\u25cf'
+    s = u'\u25cb\u2193\u2074X\u2081\u2191\xb3Y\u2081\u2191\u2074\u2193\xb3Y\u2082X\u2081\u2191\xb9\u2193\xb2Y\u2083Y\u2084\u2191\xb2\u2193\xb9\u25cf'
     print s
     p = LSAAnalyser(parse(s))
     p.analysis()
     print p.matrix
     print p.signals
-    # for i in p.matrix:
-    #     print [x is not None for x in i]
-    # print
-    # print "==================="
-    # print "Reverse build"
-    # print p.restore()
+
+    print graph_analyse.find_loops(p.matrix)
+    print graph_analyse.find_paths(p.matrix)
+    print graph_analyse.find_infinite_loops(p.matrix)

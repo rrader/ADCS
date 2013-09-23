@@ -1,6 +1,7 @@
 import string
 import pickle
 import os
+import warnings
 
 from PyQt4 import uic
 from PyQt4 import QtCore, QtGui
@@ -125,7 +126,8 @@ class ADCSWindow (QMainWindow):
         self._update_graph()
         if self.model:
             self._fill_signals()
-            self.ui.info.setPlainText("Input signals: %d\nOutput signals: %d" % (len(self.model.in_signals), len(self.model.out_signals)))
+            txt = self.ui.info.toPlainText()
+            self.ui.info.setPlainText("%s\nInput signals: %d\nOutput signals: %d" % (txt, len(self.model.in_signals), len(self.model.out_signals)))
             graph.draw_graph(self.model.barenodes, self.model.connections, self.model.matrix)
 
         if os.path.exists(IMG_PATH):
@@ -210,6 +212,14 @@ class ADCSWindow (QMainWindow):
         self.ui.matrix.setModel(model)
         self.ui.matrix.resizeColumnsToContents()
 
+        self.ui.listLoops.clear()
+        node_names = {k:nodename(k, {k: x}) for k,x in self.model.barenodes.iteritems()}
+        lines = ['->'.join([node_names[i+1] for i in l]) for l in self.model.find_loops()]
+        self.ui.listLoops.insertItems(0, QtCore.QStringList(lines))
+
+        self.ui.listPaths.clear()
+        lines = ['->'.join([node_names[i+1] for i in l]) for l in self.model.find_paths()]
+        self.ui.listPaths.insertItems(0, QtCore.QStringList(lines))
 
     def _update_graph(self):
         self.canvas.graph = self.model
@@ -225,26 +235,34 @@ class ADCSWindow (QMainWindow):
             os.remove(IMG_PATH)
         src = str(self.ui.textEdit.toPlainText().toUtf8()).decode('utf-8')
         self.log("Processing %s" % src)
-        try:
-            p = self._process(src)
-            self.model = p
-        except analysis.LSAAlgorithmError, e:
-            self.ui.statusBar.showMessage("Algorithm error:" + e.message)
-            self.log("Failed\nAlgorithm error:" + e.message)
-            self.ui.info.setPlainText("Algorithm error:" + e.message)
-            return
-        except parse.LSASyntaxError, e:
-            if hasattr(e, "pos"):
-                self.ui.textEdit.moveCursor(QtGui.QTextCursor.StartOfLine)
-                for i in range(e.pos + 1):
-                    self.ui.textEdit.moveCursor(QtGui.QTextCursor.Right)
-                self.ui.textEdit.moveCursor(QtGui.QTextCursor.Left, QtGui.QTextCursor.KeepAnchor)
-            self.ui.statusBar.showMessage("Syntax error " + e.message)
-            self.log("Failed\Syntax error:" + e.message)
-            self.ui.info.setPlainText("Syntax error:" + e.message)
-            return
-        print "OK"
-        self.ui.statusBar.showMessage("OK")
+        self.ui.info.setPlainText("")
+        with warnings.catch_warnings(record=True) as warn:
+            try:
+                p = self._process(src)
+                self.model = p
+            except analysis.LSAAlgorithmError, e:
+                self.ui.statusBar.showMessage("Algorithm error:" + e.message)
+                self.log("Failed\nAlgorithm error:" + e.message)
+                self.ui.info.setPlainText("Algorithm error:" + e.message)
+                return
+            except parse.LSASyntaxError, e:
+                if hasattr(e, "pos"):
+                    self.ui.textEdit.moveCursor(QtGui.QTextCursor.StartOfLine)
+                    for i in range(e.pos + 1):
+                        self.ui.textEdit.moveCursor(QtGui.QTextCursor.Right)
+                    self.ui.textEdit.moveCursor(QtGui.QTextCursor.Left, QtGui.QTextCursor.KeepAnchor)
+                self.ui.statusBar.showMessage("Syntax error " + e.message)
+                self.log("Failed\Syntax error:" + e.message)
+                self.ui.info.setPlainText("Syntax error:" + e.message)
+                return
+
+            if len(warn):
+                e = warn[-1].message
+                self.ui.statusBar.showMessage("Algorithm warning:" + e.message)
+                self.log("OK with warnings\nAlgorithm warning:" + e.message)
+                self.ui.info.setPlainText("Algorithm warning:" + e.message)
+            else:
+                self.ui.statusBar.showMessage("OK")
 
         self._updateMode()
 
