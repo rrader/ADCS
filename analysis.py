@@ -96,9 +96,6 @@ class LSAAnalyser(object):
                 assert_b(curr.index in self.jump_down, "no arrow down [%d]" % curr.index)
                 self._make(self.jump_down[curr.index], stack[:], full_stack + [curr], not cond, self._invert(condition_stack[:] + full_stack[-1].node.signals))
             else:
-                # print
-                # print "!!!!", stack[-1], curr
-                # print
                 assert_b(curr.index in self.jump_down, "no arrow down [%d]" % curr.index)
                 self._make(self.jump_down[curr.index], stack[:], full_stack + [curr], condition, condition_stack)
         elif type(curr) is Jump and curr.dir == ARROW_DOWN:
@@ -171,7 +168,7 @@ class LSAAnalyser(object):
         if loops:
             node_names = {k:nodename(k, {k: x}) for k,x in self.barenodes.iteritems()}
             loop = '->'.join([node_names[i+1] for i in loops[0]])
-            warn = LSAAlgorithmWarning("Loop found! %s" % loop)
+            warn = LSAAlgorithmWarning("Infinite loop found! %s" % loop)
             warn.tag = 'LOOP'
             warn.loop = loops[0]
             warnings.warn(warn)

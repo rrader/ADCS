@@ -186,7 +186,7 @@
              <item>
               <widget class="QLabel" name="label">
                <property name="text">
-                <string>Loops</string>
+                <string>Paths with loops</string>
                </property>
               </widget>
              </item>

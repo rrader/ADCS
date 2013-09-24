@@ -122,6 +122,7 @@ class ADCSWindow (QMainWindow):
     def _updateMode(self):
         # import ipydb; ipydb.db()
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.modelTab), bool(self.model))
+        self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.analysisTab), bool(self.model))
         #use full ABSOLUTE path to the image, not relative
         self._update_graph()
         if self.model:
