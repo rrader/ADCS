@@ -5,6 +5,7 @@ import graph_analyse
 import warnings
 from itertools import chain
 from PyQt4 import QtCore
+from operator import add
 
 class LSAAlgorithmError(Exception):
     pass
@@ -16,10 +17,6 @@ def assert_b(boolean, message="assertion failed"):
     if not boolean:
         print message
         raise LSAAlgorithmError(message)
-
-
-STATE_NODE = 'node'
-STATE_X = 'X' # wait arrow-up
 
 
 class LSAAnalyser(object):
@@ -63,16 +60,12 @@ class LSAAnalyser(object):
         if not condition_stack: condition_stack = []
 
         curr = self.enumerated[start]
-        # raise LSAAlgorithmError("ALREADY WAS HERE")
         if type(curr) is CertainNode:
-            # print ">>#> node. ", curr
             no_depth = False
             assert_b(not full_stack or type(full_stack[-1]) is not CertainNode or full_stack[-1].node.type != 'in',
                 'Expected arrow after input node')
             if len(stack):
                 if type(curr.node) is Control or curr.node.type == 'out' or curr.node.type == 'in':
-                    # stack[-1] -> curr
-                    # print r"%%", (stack[-1], curr), condition
                     assert_b(((stack[-1].nodeid, curr.nodeid) not in self.connections_q) ==
                         ((stack[-1].nodeid, curr.nodeid, condition) not in self.connections),
                         "two ways from %s to %s" % (nodename_n(stack[-1].node), nodename_n(curr.node)))
@@ -117,7 +110,6 @@ class LSAAnalyser(object):
             return s.node.signals[0].index
 
         self.signals = {k:_translate_node_to_index(n) for k,n in self.barenodes.iteritems()}
-
 
     def analysis(self):
         self.enumerated = []
@@ -165,14 +157,29 @@ class LSAAnalyser(object):
         self._build_table()
         loops = self.find_infinite_loops()
         self.loop = None
+
+        node_names = {k:nodename(k, {k: x}) for k,x in self.barenodes.iteritems()}
+
         if loops:
-            node_names = {k:nodename(k, {k: x}) for k,x in self.barenodes.iteritems()}
             loop = '->'.join([node_names[i+1] for i in loops[0]])
             warn = LSAAlgorithmWarning("Infinite loop found! %s" % loop)
             warn.tag = 'LOOP'
             warn.loop = loops[0]
             warnings.warn(warn)
             self.loop = loops[0]
+
+        all_loops = self.find_loops()
+        for loop in all_loops:
+            node = loop[0]
+            inside = [x for x in all_loops if node in x]
+            if len(inside) > 1:
+                loop = reduce(add, inside)
+                loop_s = '->'.join([node_names[i+1] for i in loop])
+                warn = LSAAlgorithmWarning("Infinite loop found (2-way)! %s" % loop_s)
+                warn.tag = 'LOOP2'
+                warn.loop = loop
+                self.loop = loop
+                warnings.warn(warn)
 
     def _restore(self, x=0, fr=0):
         if x == 0:
@@ -195,13 +202,15 @@ class LSAAnalyser(object):
         self._restore()
 
     def find_loops(self):
-        return graph_analyse.find_loops(self.matrix)
+        loops = graph_analyse.find_loops(self.matrix)
+        loops = list(set([tuple(graph_analyse.loop_from_looppath(x)) for x in loops]))
+        return loops
 
     def find_infinite_loops(self):
         return graph_analyse.find_infinite_loops(self.matrix)
 
     def find_paths(self):
-        return graph_analyse.find_paths(self.matrix)
+        return graph_analyse.find_paths(self.matrix) + graph_analyse.find_loops(self.matrix)
 
 
 if __name__ == '__main__':

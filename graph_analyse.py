@@ -3,12 +3,11 @@ def _find_paths(matrix, start=0):
     to_visit = [(start, [])]
     while to_visit:
         curr, path = to_visit.pop()
-        # print ">> curr", curr
         path.append(curr)
         adjs = [(index,path[:]) for (index,v) in enumerate(matrix[curr]) if v is not None]
         for adj,pth in adjs:
             if adj in path:
-                yield path + [adj]
+                yield path + [adj] # loop
             else:
                 to_visit.append((adj,pth))
         if not adjs:

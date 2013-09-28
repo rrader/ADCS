@@ -22,6 +22,7 @@ def draw_graph(nodes, connections, matrix, loop):
     highlighted = []
     if loop:
         highlighted = zip(loop, loop[1:])
+        print "HIGHLIGHTED"
     for conn in connections:
         if (conn[0]-1, conn[1]-1) in highlighted:
             color = 'red'

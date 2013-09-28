@@ -231,6 +231,7 @@ class ADCSWindow (QMainWindow):
 
     @QtCore.pyqtSlot()
     def validate(self):
+        self.model = None
         self.clear_log()
         if os.path.exists(IMG_PATH):
             os.remove(IMG_PATH)
@@ -238,6 +239,7 @@ class ADCSWindow (QMainWindow):
         self.log("Processing %s" % src)
         self.ui.info.setPlainText("")
         with warnings.catch_warnings(record=True) as warn:
+            warnings.simplefilter("always")
             try:
                 p = self._process(src)
                 self.model = p
@@ -257,7 +259,7 @@ class ADCSWindow (QMainWindow):
                 self.ui.info.setPlainText("Syntax error:" + e.message)
                 return
 
-            if len(warn):
+            if warn:
                 e = warn[-1].message
                 self.ui.statusBar.showMessage("Algorithm warning:" + e.message)
                 self.log("OK with warnings\nAlgorithm warning:" + e.message)
