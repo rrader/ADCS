@@ -34,7 +34,7 @@ def lca_machine():
     INGROUP_TYPE = [None]
     val = yield
     pushback = False
-    ret = Control(type="Start")
+    ret = Control(type="Start", signals=[])
     grouped_node = None
 
     elementary_node_states = [STATE_X_READ, STATE_Y_READ, STATE_UP_READ, STATE_DOWN_READ]
@@ -151,7 +151,7 @@ def parse(src):
     try:
         machine.next()
     except StopIteration:
-        parsed.append(Control(type="End"))
+        parsed.append(Control(type="End", signals=[]))
     return parsed
 
 if __name__ == '__main__':

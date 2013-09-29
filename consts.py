@@ -3,7 +3,7 @@ from functools import partial
 
 # Nodes
 
-Control = namedtuple('Control', ['type'])
+Control = namedtuple('Control', ['type', 'signals'])
 Signal = namedtuple('Signal', ['name', 'index', 'inverted'])
 Node = namedtuple('Node', ['type', 'signals'])
 Output = partial(Node, type='out')
@@ -13,9 +13,9 @@ Jump = namedtuple('Jump', ['dir', 'index'])
 CertainNode = namedtuple('CertainNode', ['id', 'nodeid', 'node'])
 
 
-def nodename(node, nodes):
+def nodename(node, nodes, num=None):
     n = nodes[node].node
-    s = "%d." % nodes[node].nodeid
+    s = "%d." % (nodes[node].nodeid if num is None else num)
     if type(n) is Control:
         return s + n.type
     else:
@@ -55,6 +55,8 @@ def conditionname_t(cond):
         value = 'True' if cond else 'False'
     return value
 
+def nodename_signal(signal, num):
+    return "Z%d/%s" % (num, conditionname(signal) if signal else "")
 
 # Unicode symbols
 
@@ -115,3 +117,11 @@ INPUT_KEYS = {
 }
 
 INPUT_KEYS.update(dict(((str(key), unichr(val)) for key, val in SUBSCRIPT.iteritems())))
+
+
+class Numerator(dict):
+    def get_id(self, num):
+        print "getting ", num
+        if not self.get(num):
+            self.update({num: len(self) + 1})
+        return self.get(num)

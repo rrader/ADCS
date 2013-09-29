@@ -18,6 +18,17 @@ def assert_b(boolean, message="assertion failed"):
         print message
         raise LSAAlgorithmError(message)
 
+def find_path(matrix, start, end, visited=None):
+    if visited is None: visited = []
+    if start in visited:
+        return False
+    if start != end:
+        targets = [i for i,v in enumerate(matrix[start]) if v is not None]
+        return any([find_path(matrix, t, end, visited + [start]) for t in targets])
+    else:
+        return True
+
+
 
 class LSAAnalyser(object):
     def __init__(self, parsed):
@@ -168,18 +179,27 @@ class LSAAnalyser(object):
             warnings.warn(warn)
             self.loop = loops[0]
 
-        all_loops = self.find_loops()
-        for loop in all_loops:
-            node = loop[0]
-            inside = [x for x in all_loops if node in x]
-            if len(inside) > 1:
-                loop = reduce(add, inside)
-                loop_s = '->'.join([node_names[i+1] for i in loop])
-                warn = LSAAlgorithmWarning("Infinite loop found (2-way)! %s" % loop_s)
-                warn.tag = 'LOOP2'
-                warn.loop = loop
-                self.loop = loop
-                warnings.warn(warn)
+        # all_loops = self.find_loops()
+        # for loop in all_loops:
+        #     node = loop[0]
+        #     inside = [x for x in all_loops if node in x]
+        #     if len(inside) > 1:
+        #         loop = reduce(add, inside)
+        #         loop_s = '->'.join([node_names[i+1] for i in loop])
+        #         warn = LSAAlgorithmWarning("Infinite loop found (2-way)! %s" % loop_s)
+        #         warn.tag = 'LOOP2'
+        #         warn.loop = loop
+        #         self.loop = loop
+        #         warnings.warn(warn)
+        loops = []
+        for i,x in enumerate(self.matrix):
+            if not find_path(self.matrix, i, len(self.matrix)-1):
+                loops.append(i)
+        if loops:
+            loop_s = '->'.join([node_names[i+1] for i in loops])
+            warn = LSAAlgorithmWarning("Infinite loop found (2-way)! %s" % loop_s)
+            warnings.warn(warn)
+            self.loop = loops
 
     def _restore(self, x=0, fr=0):
         if x == 0:
@@ -214,13 +234,14 @@ class LSAAnalyser(object):
 
 
 if __name__ == '__main__':
-    s = u'\u25cb\u2193\u2074X\u2081\u2191\xb3Y\u2081\u2191\u2074\u2193\xb3Y\u2082X\u2081\u2191\xb9\u2193\xb2Y\u2083Y\u2084\u2191\xb2\u2193\xb9\u25cf'
+    s =  u'\u25cbX\u2081\u2191\xb9\u2193\xb2Y\u2081X\u2082\u2191\xb2Y\u2081\u2191\xb2\u2193\xb9\u25cf'
     print s
     p = LSAAnalyser(parse(s))
     p.analysis()
-    print p.matrix
-    print p.signals
+    # print p.matrix
+    # print p.signals
+    # print p.loop
 
-    print graph_analyse.find_loops(p.matrix)
-    print graph_analyse.find_paths(p.matrix)
-    print graph_analyse.find_infinite_loops(p.matrix)
+    # print graph_analyse.find_loops(p.matrix)
+    # print graph_analyse.find_paths(p.matrix)
+    # print graph_analyse.find_infinite_loops(p.matrix)

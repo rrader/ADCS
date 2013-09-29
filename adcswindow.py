@@ -10,11 +10,13 @@ import networkx as nx
 import analysis
 import parse
 import graph
+import machine
 from consts import *
 
 (Ui_ADCSWindow, QMainWindow) = uic.loadUiType('adcswindow.ui')
 
 IMG_PATH = os.getcwd() + "/graph.png"
+IMG_MACHINE_PATH = os.getcwd() + "/machine.png"
 
 def upper_index(num):
     symbol_index = SUPERSCRIPT[num]
@@ -82,6 +84,24 @@ class ADCSWindow (QMainWindow):
         self.ui.innerLayout.addWidget(scrollArea)
         self.ui.innerLayout.setStretch(0,2)
         self.ui.innerLayout.setStretch(1,1)
+
+
+
+        mpic = QtGui.QLabel(self)
+        # pic.setGeometry(10, 10, 400, 100)
+        self.m_canvas = mpic
+        mpic.setScaledContents(True)
+        mpic.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
+
+        scrollArea = QtGui.QScrollArea(self)
+        scrollArea.setBackgroundRole(QtGui.QPalette.Dark)
+        scrollArea.setWidget(mpic)
+
+        self.ui.machineLayout.addWidget(scrollArea)
+        self.ui.machineLayout.setStretch(0,2)
+        self.ui.machineLayout.setStretch(1,1)
+        self.ui.machineLayout.setStretch(2,4)
+
         # self.connect(self.ui.toolButton_Start,
         #              QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
         self.ui.actionNew.triggered.connect(self.newDocument)
@@ -92,11 +112,19 @@ class ADCSWindow (QMainWindow):
         self.ui.actionOpen_alg.triggered.connect(self.open_alg)
         self.ui.actionOpen_bin.triggered.connect(self.open_bin)
         self.ui.textEdit.installEventFilter(self)
+
+        self.clear()
+
+    def clear(self):
         if os.path.exists(IMG_PATH):
             os.remove(IMG_PATH)
+        if os.path.exists(IMG_MACHINE_PATH):
+            os.remove(IMG_MACHINE_PATH)
         self.ui.textEdit.setPlainText(u'\u25cb\u25cf')
         self.model = None
+        self.machine = None
         self._updateMode()
+
 
     def __del__(self):
         self.ui = None
@@ -123,26 +151,36 @@ class ADCSWindow (QMainWindow):
         # import ipydb; ipydb.db()
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.modelTab), bool(self.model))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.analysisTab), bool(self.model))
+        self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.machineTab), bool(self.machine))
         #use full ABSOLUTE path to the image, not relative
         self._update_graph()
         if self.model:
             self._fill_signals()
             txt = self.ui.info.toPlainText()
             self.ui.info.setPlainText("%s\nInput signals: %d\nOutput signals: %d" % (txt, len(self.model.in_signals), len(self.model.out_signals)))
-            graph.draw_graph(self.model.barenodes, self.model.connections, self.model.matrix, loop=self.model.loop)
+            ren = None
+            if self.machine:
+                ren = graph.renumerate(self.machine[0])
+                graph.draw_machine(*self.machine)
+            graph.draw_graph(self.model.barenodes, self.model.connections, self.model.matrix, loop=self.model.loop, renumerated=ren)
+
 
         if os.path.exists(IMG_PATH):
             self.canvas.setPixmap(QtGui.QPixmap(IMG_PATH))
             self.canvas.adjustSize()
+
+        if os.path.exists(IMG_MACHINE_PATH):
+            self.m_canvas.setPixmap(QtGui.QPixmap(IMG_MACHINE_PATH))
+            self.m_canvas.adjustSize()
 
 
     def open_alg(self):
         fname = QtGui.QFileDialog.getOpenFileName(self, 'Open Algorithm', '', 
                 "Algorithm .txt (*.txt)")
         if fname:
+            self.clear()
             src = open(fname).read().decode('utf-8')
             self.ui.textEdit.setPlainText(src)
-            self.model = None
             self.log("file %s loaded (text)" % fname)
         self._updateMode()
 
@@ -150,6 +188,7 @@ class ADCSWindow (QMainWindow):
         fname = QtGui.QFileDialog.getOpenFileName(self, 'Open Algorithm Model', '', 
                 "Algorithm Model .alg (*.alg)")
         if fname:
+            self.clear()
             self.model = pickle.load(open(fname))
             self.ui.textEdit.setPlainText(self.model.source)
             self._updateMode()
@@ -174,6 +213,14 @@ class ADCSWindow (QMainWindow):
                     pickle.dump(self.model, f)
         else:
             QtGui.QMessageBox.about(self, "Can't save", "Analyse your algorithm first")
+
+    def save_machine(self):
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save Machine', '', 
+                "Machine .txt (*.txt)")
+        if fname:
+            with open(fname, 'w') as f:
+                src = str(self.ui.textEdit.toPlainText().toUtf8()).decode('utf-8')
+                f.write(src.encode('UTF-8'))
 
     def clear_log(self):
         self.ui.log.setPlainText(u"")
@@ -202,6 +249,16 @@ class ADCSWindow (QMainWindow):
         nodes = sorted("%d: %d" % (k,x) for k,x in self.model.signals.iteritems())
         self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
 
+        if self.machine:
+            self.ui.listTransitions.clear()
+            num = graph.renumerate(self.machine[0])
+            trans = ["%d -> %d : %s" % (num.get_id(x[0]+1), num.get_id(x[1]+1), conditionname(x[2])) for x in self.machine[0]]
+            self.ui.listTransitions.insertItems(0, QtCore.QStringList(trans))
+
+            self.ui.listSignalsMachine.clear()
+            nodes = sorted("%d: %s" % (num.get_id(k+1),conditionname(x)) for k,x in self.machine[1].iteritems())
+            self.ui.listSignalsMachine.insertItems(0, QtCore.QStringList(nodes))
+
         if len(self.model.barenodes) < 10:
             matrix = ""
             for i in self.model.matrix:
@@ -223,10 +280,14 @@ class ADCSWindow (QMainWindow):
         self.ui.listPaths.insertItems(0, QtCore.QStringList(lines))
 
     def _update_graph(self):
-        self.canvas.graph = self.model
+        # self.canvas.graph = self.model
         self.log("Drawing...", False)
         if os.path.exists(IMG_PATH):
             self.canvas.setPixmap(QtGui.QPixmap(IMG_PATH))
+            self.canvas.adjustSize()
+        if os.path.exists(IMG_MACHINE_PATH):
+            self.m_canvas.setPixmap(QtGui.QPixmap(IMG_MACHINE_PATH))
+            self.m_canvas.adjustSize()
         self.log("OK")
 
     @QtCore.pyqtSlot()
@@ -265,6 +326,7 @@ class ADCSWindow (QMainWindow):
                 self.log("OK with warnings\nAlgorithm warning:" + e.message)
                 self.ui.info.setPlainText("Algorithm warning:" + e.message)
             else:
+                self.machine = machine.make_machine(self.model.matrix, self.model.barenodes)
                 self.ui.statusBar.showMessage("OK")
 
         self._updateMode()

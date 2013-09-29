@@ -164,6 +164,8 @@
        </layout>
       </widget>
 
+
+
       <widget class="QWidget" name="analysisTab">
        <property name="enabled">
         <bool>true</bool>
@@ -223,6 +225,69 @@
         </item>
        </layout>
       </widget>
+
+
+
+      <widget class="QWidget" name="machineTab">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <attribute name="title">
+        <string>Moore machine</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="tab_2_layout">
+        <item>
+         <layout class="QHBoxLayout" name="machineLayout" stretch="1,1">
+          <item>
+           <widget class="QFrame" name="frame">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_3">
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Transitions</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listTransitions"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+
+          <item>
+           <widget class="QFrame" name="frame">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_3">
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Signals</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listSignalsMachine"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+
+         </layout>
+        </item>
+       </layout>
+      </widget> 
 
      </widget>
 
