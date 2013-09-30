@@ -19,6 +19,7 @@ def assert_b(boolean, message="assertion failed"):
         raise LSAAlgorithmError(message)
 
 def find_path(matrix, start, end, visited=None):
+    " Is path from start to end exists in graph 'matrix'? "
     if visited is None: visited = []
     if start in visited:
         return False
@@ -179,18 +180,6 @@ class LSAAnalyser(object):
             warnings.warn(warn)
             self.loop = loops[0]
 
-        # all_loops = self.find_loops()
-        # for loop in all_loops:
-        #     node = loop[0]
-        #     inside = [x for x in all_loops if node in x]
-        #     if len(inside) > 1:
-        #         loop = reduce(add, inside)
-        #         loop_s = '->'.join([node_names[i+1] for i in loop])
-        #         warn = LSAAlgorithmWarning("Infinite loop found (2-way)! %s" % loop_s)
-        #         warn.tag = 'LOOP2'
-        #         warn.loop = loop
-        #         self.loop = loop
-        #         warnings.warn(warn)
         loops = []
         for i,x in enumerate(self.matrix):
             if not find_path(self.matrix, i, len(self.matrix)-1):

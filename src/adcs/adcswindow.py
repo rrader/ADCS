@@ -13,7 +13,9 @@ import graph
 import machine
 from consts import *
 
-(Ui_ADCSWindow, QMainWindow) = uic.loadUiType('adcswindow.ui')
+path = os.path.dirname(__file__)
+
+(Ui_ADCSWindow, QMainWindow) = uic.loadUiType(os.path.join(path, 'adcswindow.ui'))
 
 IMG_PATH = os.getcwd() + "/graph.png"
 IMG_MACHINE_PATH = os.getcwd() + "/machine.png"

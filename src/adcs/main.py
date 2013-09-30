@@ -6,8 +6,7 @@ from PyQt4.QtGui import *
 
 from adcswindow import ADCSWindow
 
-if __name__ == '__main__':
-
+def main():
     # create application
     app = QApplication( sys.argv )
     app.setApplicationName( 'ADCS Lab' )
@@ -22,3 +21,7 @@ if __name__ == '__main__':
 
     # execute application
     sys.exit( app.exec_() )
+
+
+if __name__ == '__main__':
+    main()
