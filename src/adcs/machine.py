@@ -37,6 +37,26 @@ def make_machine(table, signals):
     _make_machine(0, None, [], [])
     return sorted(conn), sigs
 
+def to_dict(machine):
+    res = []
+    if type(x) is dict:
+        for i,x in machine.iteritems():
+            if hasattr(x, '__iter__'):
+                res.append(to_dict(x))
+            else:
+                res.append(str(x) if type(x) is unicode else x)
+    else:
+        for x in machine:
+            if hasattr(x, '__iter__'):
+                res.append(to_dict(x))
+            else:
+                res.append(str(x) if type(x) is unicode else x)
+    return res
+
+def from_dict(machine):
+    print machine
+    return machine[0]
+
 
 if __name__ == '__main__':
     s = u'\u25cbX\u2081\u2191\xb9Y\u2081\u2191\xb2\u2193\xb9Y\u2082\u2193\xb2\u25cf'
@@ -47,6 +67,11 @@ if __name__ == '__main__':
         print x
     print "===="
     conn, sigs = make_machine(p.matrix, p.barenodes)
-    print conn, sigs
-    import graph
-    graph.draw_machine(conn, sigs)
+    # print conn, sigs
+    # import graph
+    # graph.draw_machine(conn, sigs)
+    import yaml
+    print (conn, sigs)
+    y = yaml.dump(to_dict((conn, sigs)))
+    print y
+    print from_dict(yaml.load(y))

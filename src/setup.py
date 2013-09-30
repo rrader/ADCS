@@ -5,7 +5,7 @@ setup(
     version='0.1',
     author='Roman Rader',
     author_email='roman.rader@gmail.com',
-    install_requires=['pydot'],
+    install_requires=['pydot', 'PyYAML'],
     tests_require=['nose'],
     packages=[
         'adcs',

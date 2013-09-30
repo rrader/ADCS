@@ -5,7 +5,7 @@ import warnings
 
 from PyQt4 import uic
 from PyQt4 import QtCore, QtGui
-import networkx as nx
+import yaml
 
 import analysis
 import parse
@@ -113,6 +113,7 @@ class ADCSWindow (QMainWindow):
         self.ui.actionSave_bin.triggered.connect(self.save_bin)
         self.ui.actionOpen_alg.triggered.connect(self.open_alg)
         self.ui.actionOpen_bin.triggered.connect(self.open_bin)
+        self.ui.actionSave_machine.triggered.connect(self.save_machine)
         self.ui.textEdit.installEventFilter(self)
 
         self.clear()
@@ -217,12 +218,15 @@ class ADCSWindow (QMainWindow):
             QtGui.QMessageBox.about(self, "Can't save", "Analyse your algorithm first")
 
     def save_machine(self):
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save Machine', '', 
-                "Machine .txt (*.txt)")
-        if fname:
-            with open(fname, 'w') as f:
-                src = str(self.ui.textEdit.toPlainText().toUtf8()).decode('utf-8')
-                f.write(src.encode('UTF-8'))
+        if self.machine:
+            fname = QtGui.QFileDialog.getSaveFileName(self, 'Save Machine', '', 
+                    "Machine .txt (*.txt)")
+            if fname:
+                with open(fname, 'w') as f:
+                    src = yaml.dump(machine.to_dict(self.machine), default_flow_style=False)
+                    f.write(src)
+        else:
+            QtGui.QMessageBox.about(self, "Can't save", "Analyse your algorithm first")
 
     def clear_log(self):
         self.ui.log.setPlainText(u"")

@@ -52,6 +52,7 @@ def renumerate(connections):
     return numbers
 
 def draw_machine(connections, signals):
+    print ">>>", signals
     G = pydot.Dot('graphname', graph_type='digraph', rankdir='LR', size=100)
     subg = pydot.Subgraph('', rank='same')
     G.add_subgraph(subg)
