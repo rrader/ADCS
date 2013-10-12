@@ -12,7 +12,7 @@ def draw_graph(nodes, connections, matrix, loop, renumerated):
     G = pydot.Dot('graphname', graph_type='digraph', rankdir='TB', size=100)
     subg = pydot.Subgraph('', rank='same')
     G.add_subgraph(subg)
-
+    print ">>>!!!"
     def prefix(k):
         prefix = ""
         if k in renumerated:
@@ -49,6 +49,9 @@ def renumerate(connections):
     for conn in connections:
         numbers.get_id(conn[0]+1)
         numbers.get_id(conn[1]+1)
+    
+    numbers[max(numbers.keys())] = 1
+
     return numbers
 
 def draw_machine(connections, signals):
@@ -78,4 +81,4 @@ if __name__ == '__main__':
     print p.connections
     print p.barenodes
     print
-    draw_graph(p.barenodes, p.connections, p.matrix)
+    draw_graph(p.barenodes, p.connections, p.matrix, None, None)

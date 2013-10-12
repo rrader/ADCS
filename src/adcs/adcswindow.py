@@ -114,11 +114,13 @@ class ADCSWindow (QMainWindow):
         self.ui.actionOpen_alg.triggered.connect(self.open_alg)
         self.ui.actionOpen_bin.triggered.connect(self.open_bin)
         self.ui.actionSave_machine.triggered.connect(self.save_machine)
+        self.ui.actionOpen_machine.triggered.connect(self.open_machine)
         self.ui.textEdit.installEventFilter(self)
 
         self.clear()
 
     def clear(self):
+        self.no_alg = False
         if os.path.exists(IMG_PATH):
             os.remove(IMG_PATH)
         if os.path.exists(IMG_MACHINE_PATH):
@@ -138,7 +140,7 @@ class ADCSWindow (QMainWindow):
             QtGui.QMessageBox.No, QtGui.QMessageBox.No)
 
         if reply == QtGui.QMessageBox.Yes:
-            self.model = None
+            self.clear()
             self.ui.textEdit.setPlainText(u'\u25cb\u25cf')
             self.canvas.clear()
 
@@ -152,19 +154,20 @@ class ADCSWindow (QMainWindow):
 
     def _updateMode(self):
         # import ipydb; ipydb.db()
+        self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.editorTab), not self.no_alg)
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.modelTab), bool(self.model))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.analysisTab), bool(self.model))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.machineTab), bool(self.machine))
         #use full ABSOLUTE path to the image, not relative
+        ren = None
         self._update_graph()
+        if self.machine:
+            ren = graph.renumerate(self.machine[0])
+            graph.draw_machine(*self.machine)
+        self._fill_signals()
         if self.model:
-            self._fill_signals()
             txt = self.ui.info.toPlainText()
             self.ui.info.setPlainText("%s\nInput signals: %d\nOutput signals: %d" % (txt, len(self.model.in_signals), len(self.model.out_signals)))
-            ren = None
-            if self.machine:
-                ren = graph.renumerate(self.machine[0])
-                graph.draw_machine(*self.machine)
             graph.draw_graph(self.model.barenodes, self.model.connections, self.model.matrix, loop=self.model.loop, renumerated=ren)
 
 
@@ -220,13 +223,24 @@ class ADCSWindow (QMainWindow):
     def save_machine(self):
         if self.machine:
             fname = QtGui.QFileDialog.getSaveFileName(self, 'Save Machine', '', 
-                    "Machine .txt (*.txt)")
+                    "Machine .machine (*.machine)")
             if fname:
                 with open(fname, 'w') as f:
                     src = yaml.dump(machine.to_dict(self.machine), default_flow_style=False)
                     f.write(src)
         else:
             QtGui.QMessageBox.about(self, "Can't save", "Analyse your algorithm first")
+
+    def open_machine(self):
+        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open Machine', '', 
+                "Machine .machine (*.machine)")
+        if fname:
+            self.clear()
+            src = open(fname).read().decode('utf-8')
+            self.no_alg = True
+            self.machine = machine.from_dict(yaml.load(src))
+            self.log("file %s loaded (machine)" % fname)
+        self._updateMode()
 
     def clear_log(self):
         self.ui.log.setPlainText(u"")
@@ -247,13 +261,14 @@ class ADCSWindow (QMainWindow):
         return p
 
     def _fill_signals(self):
-        self.ui.listSignals.clear()
-        signals = sorted([conditionname([x]) for x in self.model.in_signals + self.model.out_signals])
-        self.ui.listSignals.insertItems(0, QtCore.QStringList(signals))
+        if self.model:
+            self.ui.listSignals.clear()
+            signals = sorted([conditionname([x]) for x in self.model.in_signals + self.model.out_signals])
+            self.ui.listSignals.insertItems(0, QtCore.QStringList(signals))
 
-        self.ui.listNodes.clear()
-        nodes = sorted("%d: %d" % (k,x) for k,x in self.model.signals.iteritems())
-        self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
+            self.ui.listNodes.clear()
+            nodes = sorted("%d: %d" % (k,x) for k,x in self.model.signals.iteritems())
+            self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
 
         if self.machine:
             self.ui.listTransitions.clear()
@@ -265,25 +280,26 @@ class ADCSWindow (QMainWindow):
             nodes = sorted("%d: %s" % (num.get_id(k+1),conditionname(x)) for k,x in self.machine[1].iteritems())
             self.ui.listSignalsMachine.insertItems(0, QtCore.QStringList(nodes))
 
-        if len(self.model.barenodes) < 10:
-            matrix = ""
-            for i in self.model.matrix:
-                matrix += ','.join(["%6s" % (x) for x in i]) + "\n"
-            self.log(matrix)
+        if self.model:
+            if len(self.model.barenodes) < 10:
+                matrix = ""
+                for i in self.model.matrix:
+                    matrix += ','.join(["%6s" % (x) for x in i]) + "\n"
+                self.log(matrix)
 
-        # model = QtCode.QStandartItemModel(2,3,self)
-        model = MatrixModel(self.ui.matrix, self.model)
-        self.ui.matrix.setModel(model)
-        self.ui.matrix.resizeColumnsToContents()
+            # model = QtCode.QStandartItemModel(2,3,self)
+            model = MatrixModel(self.ui.matrix, self.model)
+            self.ui.matrix.setModel(model)
+            self.ui.matrix.resizeColumnsToContents()
 
-        self.ui.listLoops.clear()
-        node_names = {k:nodename(k, {k: x}) for k,x in self.model.barenodes.iteritems()}
-        lines = ['->'.join([node_names[i+1] for i in l]) for l in self.model.find_loops()]
-        self.ui.listLoops.insertItems(0, QtCore.QStringList(lines))
+            self.ui.listLoops.clear()
+            node_names = {k:nodename(k, {k: x}) for k,x in self.model.barenodes.iteritems()}
+            lines = ['->'.join([node_names[i+1] for i in l]) for l in self.model.find_loops()]
+            self.ui.listLoops.insertItems(0, QtCore.QStringList(lines))
 
-        self.ui.listPaths.clear()
-        lines = ['->'.join([node_names[i+1] for i in l]) for l in self.model.find_paths()]
-        self.ui.listPaths.insertItems(0, QtCore.QStringList(lines))
+            self.ui.listPaths.clear()
+            lines = ['->'.join([node_names[i+1] for i in l]) for l in self.model.find_paths()]
+            self.ui.listPaths.insertItems(0, QtCore.QStringList(lines))
 
     def _update_graph(self):
         # self.canvas.graph = self.model

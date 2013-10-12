@@ -25,41 +25,44 @@ def make_machine(table, signals):
             #
             if not no_deep:
                 for i,c in targets:
-                    _make_machine(i, start, [], visited + [start])
+                    _make_machine(i, start, [], visited + [(start, is_cond)])
         else:
-            if start in visited:
+            it = (start, is_cond)
+            if it in visited and all([m[1] for m in visited[visited.index(it):]]):
+                print visited
                 return
             for i,c in targets:
                 s = signals[start+1].node.signals
                 if not c:
                     s = negative(s)
-                _make_machine(i, prev, cond + s, visited + [start])
+                _make_machine(i, prev, cond + s, visited + [(start, is_cond)])
     _make_machine(0, None, [], [])
     return sorted(conn), sigs
 
 def to_dict(machine):
-    res = []
-    if type(x) is dict:
-        for i,x in machine.iteritems():
-            if hasattr(x, '__iter__'):
-                res.append(to_dict(x))
-            else:
-                res.append(str(x) if type(x) is unicode else x)
-    else:
-        for x in machine:
-            if hasattr(x, '__iter__'):
-                res.append(to_dict(x))
-            else:
-                res.append(str(x) if type(x) is unicode else x)
-    return res
+    p1, p2 = machine
+    p1_r = []
+    for p in p1:
+        p1_r.append([p[0], p[1], [{"index":x[1], "inv":x[2]} for x in p[2]] if p[2] else None ])
+    # print p2
+    p2_r = {}
+    for k,v in p2.iteritems():
+        p2_r[k] = v[0][1] if len(v) else None
+    return {"connections":p1_r, "values":p2_r}
 
 def from_dict(machine):
-    print machine
-    return machine[0]
-
+    p1 = machine['connections']
+    p2 = machine['values']
+    p1_r = []
+    p2_r = {}
+    for s in p1:
+        p1_r.append((s[0], s[1], [Signal(u'X', x['index'], x['inv']) for x in s[2]] if s[2] else [] ))
+    for k,v in p2.iteritems():
+        p2_r[k] = [Signal(u'Y', v, False)] if v else []
+    return (p1_r, p2_r)
 
 if __name__ == '__main__':
-    s = u'\u25cbX\u2081\u2191\xb9Y\u2081\u2191\xb2\u2193\xb9Y\u2082\u2193\xb2\u25cf'
+    s = u'\u25cb\u2193\xb3X\u2081\u2191\xb9X\u2082\u2191\xb2Y\u2081\u2191\xb3\u2193\xb2Y\u2082\u2191\u2074\u2193\xb9X\u2083\u2191\u2075Y\u2083\u2191\u2074\u2193\u2075Y\u2084\u2191\xb3\u2193\u2074\u25cf'
     p = LSAAnalyser(parse(s))
     p.analysis()
     print "===="
@@ -67,11 +70,15 @@ if __name__ == '__main__':
         print x
     print "===="
     conn, sigs = make_machine(p.matrix, p.barenodes)
-    # print conn, sigs
-    # import graph
-    # graph.draw_machine(conn, sigs)
+    print conn, sigs
+    import graph
+    graph.draw_machine(conn, sigs)
+
     import yaml
     print (conn, sigs)
-    y = yaml.dump(to_dict((conn, sigs)))
+    # print 
+    y = yaml.dump(to_dict((conn, sigs)), default_flow_style=False)
     print y
+    print
+    # print y
     print from_dict(yaml.load(y))
