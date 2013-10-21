@@ -144,7 +144,7 @@ def encode_machine(table_src, signals_src):
 
 
 def to_dict(machine):
-    p1, p2 = machine
+    p1, p2, p3, p4 = machine
     p1_r = []
     for p in p1:
         p1_r.append([p[0], p[1], [{"index":x[1], "inv":x[2]} for x in p[2]] if p[2] else None ])
@@ -152,18 +152,20 @@ def to_dict(machine):
     p2_r = {}
     for k,v in p2.iteritems():
         p2_r[k] = v[0][1] if len(v) else None
-    return {"connections":p1_r, "values":p2_r}
+    return {"connections":p1_r, "values":p2_r, "codes": p3, "additional_nodes": p4}
 
 def from_dict(machine):
     p1 = machine['connections']
     p2 = machine['values']
+    p3 = machine['codes']
+    p4 = machine['additional_nodes']
     p1_r = []
     p2_r = {}
     for s in p1:
         p1_r.append((s[0], s[1], [Signal(u'X', x['index'], x['inv']) for x in s[2]] if s[2] else [] ))
     for k,v in p2.iteritems():
         p2_r[k] = [Signal(u'Y', v, False)] if v else []
-    return (p1_r, p2_r)
+    return (p1_r, p2_r, p3, p4)
 
 if __name__ == '__main__':
     s = u'\u25cbY\u2081Y\u2082Y\u2083Y\u2084\u25cf'
@@ -186,4 +188,7 @@ if __name__ == '__main__':
     # print
     # # print y
     # print from_dict(yaml.load(y))
-    print encode_machine(conn, sigs)
+    a = encode_machine(conn, sigs)
+    d = to_dict(a)
+    print a
+    print a == from_dict(d)

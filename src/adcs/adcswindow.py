@@ -163,8 +163,7 @@ class ADCSWindow (QMainWindow):
         self._update_graph()
         if self.machine:
             ren = graph.renumerate(self.machine[0])
-            self.encoded_machine = machine.encode_machine(*self.machine)
-            graph.draw_machine(*self.encoded_machine)
+            graph.draw_machine(*self.machine)
         self._fill_signals()
         if self.model:
             txt = self.ui.info.toPlainText()
@@ -271,14 +270,18 @@ class ADCSWindow (QMainWindow):
             nodes = sorted("%d: %d" % (k,x) for k,x in self.model.signals.iteritems())
             self.ui.listNodes.insertItems(0, QtCore.QStringList(nodes))
 
+        machine = None
         if self.machine:
+            machine = self.machine
+
+        if machine:
             self.ui.listTransitions.clear()
-            num = graph.renumerate(self.machine[0])
-            trans = ["%d -> %d : %s" % (num.get_id(x[0]+1), num.get_id(x[1]+1), conditionname(x[2])) for x in self.machine[0]]
+            num = graph.renumerate(machine[0])
+            trans = ["%d -> %d : %s" % (num.get_id(x[0]+1), num.get_id(x[1]+1), conditionname(x[2])) for x in machine[0]]
             self.ui.listTransitions.insertItems(0, QtCore.QStringList(trans))
 
             self.ui.listSignalsMachine.clear()
-            nodes = sorted("%d: %s" % (num.get_id(k+1),conditionname(x)) for k,x in self.machine[1].iteritems())
+            nodes = sorted("%4d: %s" % (num.get_id(k+1),conditionname(x)) for k,x in machine[1].iteritems())
             self.ui.listSignalsMachine.insertItems(0, QtCore.QStringList(nodes))
 
         if self.model:
@@ -350,6 +353,7 @@ class ADCSWindow (QMainWindow):
                 self.ui.info.setPlainText("Algorithm warning:" + e.message)
             else:
                 self.machine = machine.make_machine(self.model.matrix, self.model.barenodes)
+                self.machine = machine.encode_machine(*self.machine)
                 print self.machine
                 self.ui.statusBar.showMessage("OK")
 
