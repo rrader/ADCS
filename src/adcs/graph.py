@@ -9,14 +9,17 @@ def draw_graph(nodes, connections, matrix, loop, renumerated):
         renumerated = {}
     if loop is None:
         loop = []
+    print connections
+    renumerated[max(renumerated.keys())+1] = 1
     G = pydot.Dot('graphname', graph_type='digraph', rankdir='TB', size=100)
     subg = pydot.Subgraph('', rank='same')
     G.add_subgraph(subg)
     print ">>>!!!"
     def prefix(k):
-        prefix = ""
+        prefix = "?"
+        print renumerated, k
         if k in renumerated:
-            prefix = " *Z%d" % renumerated[k]
+            prefix = "Z%d" % renumerated[k]
         return prefix
 
     print nodes
@@ -25,16 +28,16 @@ def draw_graph(nodes, connections, matrix, loop, renumerated):
         # print outputs
         
         if outputs <= 1:
-            G.add_node(pydot.Node(nodename(k, {k:node}) + prefix(k), shape='box'))
+            G.add_node(pydot.Node(nodename(k, {k:node}), xlabel=prefix(k), shape='box'))
         else:
-            G.add_node(pydot.Node(nodename(k, {k:node}) + prefix(k), shape='diamond'))
+            G.add_node(pydot.Node(nodename(k, {k:node}),  shape='diamond'))
 
     for conn in connections:
         if conn[0]-1 in loop and conn[1]-1 in loop:
             color = 'red'
         else:
             color = 'black'
-        pair = nodename(conn[0], nodes) + prefix(conn[0]), nodename(conn[1], nodes) + prefix(conn[1])
+        pair = nodename(conn[0], nodes), nodename(conn[1], nodes)
         outputs = len(filter(lambda x: x is not None, matrix[conn[0]-1]))
         if conn[2] is None or outputs <= 1:
             G.add_edge(pydot.Edge(*pair, color=color))
@@ -50,24 +53,38 @@ def renumerate(connections):
         numbers.get_id(conn[0]+1)
         numbers.get_id(conn[1]+1)
     
-    numbers[max(numbers.keys())] = 1
+    # numbers[max(numbers.keys())] = 1
 
     return numbers
 
-def draw_machine(connections, signals):
+def draw_machine(connections, signals, codes=None, added=None):
+    if not added:
+        added = []
     print ">>>", signals
     G = pydot.Dot('graphname', graph_type='digraph', rankdir='LR', size=100)
     subg = pydot.Subgraph('', rank='same')
     G.add_subgraph(subg)
 
     numbers = renumerate(connections)
+    all_nodes = set()
     for conn in connections:
-        pair =(nodename_signal(signals.get(conn[0]), numbers.get_id(conn[0]+1)),
-               nodename_signal(signals.get(conn[1]), numbers.get_id(conn[1]+1)))
+        n1 = nodename_signal(signals.get(conn[0]), numbers.get_id(conn[0]+1))
+        n2 = nodename_signal(signals.get(conn[1]), numbers.get_id(conn[1]+1))
+        all_nodes.add((conn[0], n1))
+        all_nodes.add((conn[1], n2))
+        pair =(n1, n2)
         if not conn[2]:
             G.add_edge(pydot.Edge(*pair))
         else:
             G.add_edge(pydot.Edge(*pair, label=conditionname(conn[2])))
+
+    print all_nodes
+    print codes
+    for i,name in all_nodes:
+        if i in added:
+            G.add_node(pydot.Node(name, xlabel=codes[i], style="dashed"))
+        else:
+            G.add_node(pydot.Node(name, xlabel=codes[i]))
 
     G.write_png('machine.png')
     print "image write"

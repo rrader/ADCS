@@ -163,7 +163,8 @@ class ADCSWindow (QMainWindow):
         self._update_graph()
         if self.machine:
             ren = graph.renumerate(self.machine[0])
-            graph.draw_machine(*self.machine)
+            self.encoded_machine = machine.encode_machine(*self.machine)
+            graph.draw_machine(*self.encoded_machine)
         self._fill_signals()
         if self.model:
             txt = self.ui.info.toPlainText()
@@ -349,6 +350,7 @@ class ADCSWindow (QMainWindow):
                 self.ui.info.setPlainText("Algorithm warning:" + e.message)
             else:
                 self.machine = machine.make_machine(self.model.matrix, self.model.barenodes)
+                print self.machine
                 self.ui.statusBar.showMessage("OK")
 
         self._updateMode()
