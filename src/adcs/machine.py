@@ -86,10 +86,9 @@ def encode_machine(table_src, signals_src):
         encoded = {0: "0"*digits}
 
         def _encode_vertex(vertex):
-            near = [v[1] for v in table if v[0] == vertex] + [v[0] for v in table if v[1] == vertex]
+            near = list(set([v[1] for v in table if v[0] == vertex] + [v[0] for v in table if v[1] == vertex]))
             print "near %d: " % vertex, near
             not_encoded = [v for v in near if v not in encoded]
-            print not_encoded
             for i in not_encoded:
                 encoded[i] = encode(encoded[vertex], encoded)
                 print "%d encoded with %s" % (i, encoded[i])
