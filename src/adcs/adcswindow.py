@@ -11,6 +11,7 @@ import analysis
 import parse
 import graph
 import machine
+import mtable
 from consts import *
 
 path = os.path.dirname(__file__)
@@ -19,6 +20,7 @@ path = os.path.dirname(__file__)
 
 IMG_PATH = os.getcwd() + "/graph.png"
 IMG_MACHINE_PATH = os.getcwd() + "/machine.png"
+IMG_FORMULAS_PATH = os.getcwd() + "/adcs_1.png"
 
 def upper_index(num):
     symbol_index = SUPERSCRIPT[num]
@@ -66,6 +68,64 @@ class MatrixModel(QtCore.QAbstractTableModel):
         return QtCore.QVariant()
 
 
+class TransitionModel(QtCore.QAbstractTableModel):
+    def __init__(self, parent, mtable, model):
+        QtCore.QAbstractTableModel.__init__(self)
+        self.gui = parent
+        self.mtable = mtable
+        self.model = model
+        # print model
+        # self.node_names = sorted([nodename(k, {k: x}) for k,x in self.analyser.barenodes.iteritems()])
+        # self.node_count = len(self.node_names)
+        # self.colLabels = self.node_names
+        self.data = []
+        for t in self.mtable:
+            ln = list(t.q) + list(t.q2)
+            signals = {sx.index: not sx.inverted for sx in t.signals}
+            for s in self.model.in_signals:
+                if s.index in signals:
+                    ln.append(str(1 if signals[s.index] else 0))
+                else:
+                    ln.append("-")
+            ys = {sx.index: not sx.inverted for sx in t.y}
+            for s in self.model.out_signals:
+                if s.index in ys:
+                    ln.append(str(1 if ys[s.index] else 0))
+                else:
+                    ln.append(str(0))
+            self.data.append(ln)
+
+        self.headers = ["Q%s" % i for i in range(len(self.mtable[0].q))] + \
+              ["Q%s+1" % i for i in range(len(self.mtable[0].q))] + \
+              ["X%d" % s.index for s in self.model.in_signals] + \
+              ["Y%d" % s.index for s in self.model.out_signals]
+
+    def rowCount(self, parent):
+        return len(self.data)
+
+    def columnCount(self, parent):
+        return len(self.data[0])
+
+    def data(self, index, role):
+        if not index.isValid():
+            return QtCore.QVariant()
+        elif role != QtCore.Qt.DisplayRole and role != QtCore.Qt.EditRole:
+            return QtCore.QVariant()
+        value = ''
+        if role == QtCore.Qt.DisplayRole:
+            row = index.row()
+            col = index.column()
+            value = self.data[row][col]
+        return QtCore.QVariant(value)
+
+    def headerData(self, section, orientation, role):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return QtCore.QVariant(self.headers[section])
+        if orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
+            return QtCore.QVariant(str(section+1))
+        return QtCore.QVariant()
+
+
 class ADCSWindow (QMainWindow):
     """ADCSWindow inherits QMainWindow"""
     def __init__(self, parent=None):
@@ -104,6 +164,18 @@ class ADCSWindow (QMainWindow):
         self.ui.machineLayout.setStretch(1,1)
         self.ui.machineLayout.setStretch(2,4)
 
+
+        fpic = QtGui.QLabel(self)
+        # pic.setGeometry(10, 10, 400, 100)
+        self.f_canvas = fpic
+        fpic.setScaledContents(True)
+        fpic.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
+
+        scrollArea = QtGui.QScrollArea(self)
+        scrollArea.setBackgroundRole(QtGui.QPalette.Light)
+        scrollArea.setWidget(fpic)
+        self.ui.formulasLayout.addWidget(scrollArea)
+
         # self.connect(self.ui.toolButton_Start,
         #              QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
         self.ui.actionNew.triggered.connect(self.newDocument)
@@ -125,9 +197,12 @@ class ADCSWindow (QMainWindow):
             os.remove(IMG_PATH)
         if os.path.exists(IMG_MACHINE_PATH):
             os.remove(IMG_MACHINE_PATH)
+        if os.path.exists(IMG_FORMULAS_PATH):
+            os.remove(IMG_FORMULAS_PATH)
         self.ui.textEdit.setPlainText(u'\u25cb\u25cf')
         self.model = None
         self.machine = None
+        self.tr_table = None
         self._updateMode()
 
 
@@ -158,6 +233,7 @@ class ADCSWindow (QMainWindow):
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.modelTab), bool(self.model))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.analysisTab), bool(self.model))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.machineTab), bool(self.machine))
+        self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.tableTab), bool(self.tr_table))
         #use full ABSOLUTE path to the image, not relative
         ren = None
         self._update_graph()
@@ -178,6 +254,10 @@ class ADCSWindow (QMainWindow):
         if os.path.exists(IMG_MACHINE_PATH):
             self.m_canvas.setPixmap(QtGui.QPixmap(IMG_MACHINE_PATH))
             self.m_canvas.adjustSize()
+
+        if os.path.exists(IMG_FORMULAS_PATH):
+            self.f_canvas.setPixmap(QtGui.QPixmap(IMG_FORMULAS_PATH))
+            self.f_canvas.adjustSize()
 
 
     def open_alg(self):
@@ -226,7 +306,7 @@ class ADCSWindow (QMainWindow):
                     "Machine .machine (*.machine)")
             if fname:
                 with open(fname, 'w') as f:
-                    src = yaml.dump(machine.to_dict(self.machine), default_flow_style=False)
+                    src = yaml.dump(machine.to_dict(self.machine, self.tr_table), default_flow_style=False)
                     f.write(src)
         else:
             QtGui.QMessageBox.about(self, "Can't save", "Analyse your algorithm first")
@@ -238,7 +318,9 @@ class ADCSWindow (QMainWindow):
             self.clear()
             src = open(fname).read().decode('utf-8')
             self.no_alg = True
-            self.machine = machine.from_dict(yaml.load(src))
+            m = machine.from_dict(yaml.load(src))
+            self.machine = m[:4]
+            self.tr_table = m[4]
             self.log("file %s loaded (machine)" % fname)
         self._updateMode()
 
@@ -305,6 +387,16 @@ class ADCSWindow (QMainWindow):
             lines = ['->'.join([node_names[i+1] for i in l]) for l in self.model.find_paths()]
             self.ui.listPaths.insertItems(0, QtCore.QStringList(lines))
 
+        if self.tr_table and self.model:
+            tr_model = TransitionModel(self.ui.tr_table, self.tr_table, self.model)
+            self.ui.tr_table.setModel(tr_model)
+            self.ui.tr_table.resizeColumnsToContents()
+            jks = mtable.jk(self.tr_table)
+            funcs = [mtable.generate_formula("J_{%d}" % (i+1), jk) for i, jk in enumerate(jks[0])] + \
+                    [mtable.generate_formula("K_{%d}" % (i+1), jk) for i, jk in enumerate(jks[1])] + \
+                    [mtable.generate_formula("Y_{%d}" % (i+1), jk) for i, jk in enumerate(jks[2])]
+            mtable.latexmath2png.math2png(funcs, os.getcwd(), prefix = "adcs_")
+
     def _update_graph(self):
         # self.canvas.graph = self.model
         self.log("Drawing...", False)
@@ -314,6 +406,9 @@ class ADCSWindow (QMainWindow):
         if os.path.exists(IMG_MACHINE_PATH):
             self.m_canvas.setPixmap(QtGui.QPixmap(IMG_MACHINE_PATH))
             self.m_canvas.adjustSize()
+        if os.path.exists(IMG_FORMULAS_PATH):
+            self.f_canvas.setPixmap(QtGui.QPixmap(IMG_FORMULAS_PATH))
+            self.f_canvas.adjustSize()
         self.log("OK")
 
     @QtCore.pyqtSlot()
@@ -355,6 +450,7 @@ class ADCSWindow (QMainWindow):
                 self.machine = machine.make_machine(self.model.matrix, self.model.barenodes)
                 self.machine = machine.encode_machine(*self.machine)
                 print self.machine
+                self.tr_table = mtable.build_table(*self.machine)
                 self.ui.statusBar.showMessage("OK")
 
         self._updateMode()

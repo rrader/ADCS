@@ -3,6 +3,7 @@ from parse import parse
 from consts import Signal #, CYCLE_NODE, ppi as _ppi
 from functools import partial
 from math import log, ceil
+import mtable
 
 def negative(lst):
     return [Signal(name=l.name, index=l.index, inverted=not l.inverted) for l in lst]
@@ -142,7 +143,7 @@ def encode_machine(table_src, signals_src):
     return table, signals, encoded, added
 
 
-def to_dict(machine):
+def to_dict(machine, add=None):
     p1, p2, p3, p4 = machine
     p1_r = []
     for p in p1:
@@ -151,20 +152,22 @@ def to_dict(machine):
     p2_r = {}
     for k,v in p2.iteritems():
         p2_r[k] = v[0][1] if len(v) else None
-    return {"connections":p1_r, "values":p2_r, "codes": p3, "additional_nodes": p4}
+    return {"connections":p1_r, "values":p2_r, "codes": p3, "additional_nodes": p4, "info": add}
 
 def from_dict(machine):
     p1 = machine['connections']
     p2 = machine['values']
     p3 = machine['codes']
     p4 = machine['additional_nodes']
+    info = machine['info']
+    print info
     p1_r = []
     p2_r = {}
     for s in p1:
         p1_r.append((s[0], s[1], [Signal(u'X', x['index'], x['inv']) for x in s[2]] if s[2] else [] ))
     for k,v in p2.iteritems():
         p2_r[k] = [Signal(u'Y', v, False)] if v else []
-    return (p1_r, p2_r, p3, p4)
+    return (p1_r, p2_r, p3, p4, info)
 
 if __name__ == '__main__':
     s = u'\u25cbY\u2081Y\u2082Y\u2083Y\u2084\u25cf'
