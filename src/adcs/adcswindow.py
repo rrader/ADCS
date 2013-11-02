@@ -67,17 +67,22 @@ class MatrixModel(QtCore.QAbstractTableModel):
             return QtCore.QVariant(self.colLabels[section])
         return QtCore.QVariant()
 
+def is_comform(item, q, signals):
+    ok = True
+    lst = [mtable.condition(name='q', index=i, val=int(v)) for i,v in enumerate(q)] + \
+          [mtable.condition(name='X', index=k, val=int(v)) for k,v in signals.iteritems()]
+    for q in lst:
+        ok = ok and any([it == q for it in item])
+    return ok
+
 
 class TransitionModel(QtCore.QAbstractTableModel):
-    def __init__(self, parent, mtable, model):
+    def __init__(self, parent, mtable, model, jk):
         QtCore.QAbstractTableModel.__init__(self)
         self.gui = parent
         self.mtable = mtable
         self.model = model
-        # print model
-        # self.node_names = sorted([nodename(k, {k: x}) for k,x in self.analyser.barenodes.iteritems()])
-        # self.node_count = len(self.node_names)
-        # self.colLabels = self.node_names
+        self.jk = jk
         self.data = []
         for t in self.mtable:
             ln = list(t.q) + list(t.q2)
@@ -88,17 +93,24 @@ class TransitionModel(QtCore.QAbstractTableModel):
                 else:
                     ln.append("-")
             ys = {sx.index: not sx.inverted for sx in t.y}
-            for s in self.model.out_signals:
+            for s in sorted(self.model.out_signals, key=lambda x:x.index):
                 if s.index in ys:
                     ln.append(str(1 if ys[s.index] else 0))
                 else:
                     ln.append(str(0))
+            for char in jk:
+                for item in char:
+                    ln.append('1' if any([is_comform(simple, t.q, signals) for simple in item]) else '0')
+                        
             self.data.append(ln)
 
         self.headers = ["Q%s" % i for i in range(len(self.mtable[0].q))] + \
               ["Q%s+1" % i for i in range(len(self.mtable[0].q))] + \
               ["X%d" % s.index for s in self.model.in_signals] + \
-              ["Y%d" % s.index for s in self.model.out_signals]
+              ["Y%d" % s.index for s in sorted(self.model.out_signals, key=lambda x:x.index)] + \
+              ["J%d" % (i+1) for i in range(len(self.mtable[0].q))] + \
+              ["K%d" % (i+1) for i in range(len(self.mtable[0].q))] + \
+              ["Y%d" % (i+1) for i in range(len(self.mtable[0].q))]
 
     def rowCount(self, parent):
         return len(self.data)
@@ -388,14 +400,14 @@ class ADCSWindow (QMainWindow):
             self.ui.listPaths.insertItems(0, QtCore.QStringList(lines))
 
         if self.tr_table and self.model:
-            tr_model = TransitionModel(self.ui.tr_table, self.tr_table, self.model)
-            self.ui.tr_table.setModel(tr_model)
-            self.ui.tr_table.resizeColumnsToContents()
             jks = mtable.jk(self.tr_table)
             funcs = [mtable.generate_formula("J_{%d}" % (i+1), jk) for i, jk in enumerate(jks[0])] + \
                     [mtable.generate_formula("K_{%d}" % (i+1), jk) for i, jk in enumerate(jks[1])] + \
                     [mtable.generate_formula("Y_{%d}" % (i+1), jk) for i, jk in enumerate(jks[2])]
             mtable.latexmath2png.math2png(funcs, os.getcwd(), prefix = "adcs_")
+            tr_model = TransitionModel(self.ui.tr_table, self.tr_table, self.model, jks)
+            self.ui.tr_table.setModel(tr_model)
+            self.ui.tr_table.resizeColumnsToContents()
 
     def _update_graph(self):
         # self.canvas.graph = self.model

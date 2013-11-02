@@ -88,6 +88,14 @@ def generate_formula(pre, conditions):
     return "%s = %r" % (pre, orf(args=lst))
 
 
+def is_comform(item, q, signals):
+    ok = True
+    lst = [condition(name='q', index=i, val=int(v)) for i,v in enumerate(q)] + \
+          [condition(name='X', index=k, val=int(v)) for k,v in signals.iteritems()]
+    for q in lst:
+        ok = ok and any([it == q for it in item])
+    return ok
+
 if __name__ == '__main__':
     s = u'\u25cbX\u2081\u2191\xb9Y\u2081Y\u2082\u2191\xb2\u2193\xb9Y\u2082\u2193\xb2\u25cf'
     p = LSAAnalyser(parse(s))
@@ -97,6 +105,7 @@ if __name__ == '__main__':
     print mc
 
     tbl = build_table(*mc)
+    jks = jk(tbl)
     for t in tbl:
         ln = list(t.q) + list(t.q2)
         signals = {sx.index: not sx.inverted for sx in t.signals}
@@ -111,21 +120,34 @@ if __name__ == '__main__':
                 ln.append(str(1 if ys[s.index] else 0))
             else:
                 ln.append(str(0))
+
+        # j-s
+        for char in jks:
+            for item in char:
+                for simple in item:  # or-items
+                    ln.append('1' if is_comform(simple, t.q, signals) else '0')
         print ln
         # print t
     headers = ["Q%s" % i for i in range(len(tbl[0].q))] + \
               ["Q%s+1" % i for i in range(len(tbl[0].q))] + \
               ["X%d" % s.index for s in p.in_signals] + \
-              ["Y%d" % s.index for s in p.out_signals]
+              ["Y%d" % s.index for s in p.out_signals] + \
+              ["J%d" % i for i in range(len(tbl[0].q))] + \
+              ["K%d" % i for i in range(len(tbl[0].q))]
     print headers
     # for t in tbl:
     #     print t
-    jks = jk(tbl)
-    print jks
-    js = [generate_formula("J_{%d}" % (i), jk) for i, jk in enumerate(jks[0])]
-    ks = [generate_formula("K_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
-    ys = [generate_formula("Y_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
-    # print js
-    print ks
+
+    print
+    print
+    for x in jks:
+        print "."
+        for y in x:
+            print y
+    # js = [generate_formula("J_{%d}" % (i), jk) for i, jk in enumerate(jks[0])]
+    # ks = [generate_formula("K_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
+    # ys = [generate_formula("Y_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
+    # # print js
+    # print ks
     # latexmath2png.math2png(js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks, os.getcwd(), prefix = "adcs_")
 
