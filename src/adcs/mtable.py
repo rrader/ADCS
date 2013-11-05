@@ -7,6 +7,8 @@ import machine
 from functools import partial
 from collections import namedtuple
 from latexmath2png import latexmath2png
+import itertools
+import operator
 
 table_item = namedtuple("table_item", ["q", "q2", "signals", "bit", "y"])
 condition = namedtuple("condition", ["name", "index", "val"])
@@ -88,13 +90,97 @@ def generate_formula(pre, conditions):
     return "%s = %r" % (pre, orf(args=lst))
 
 
-def is_comform(item, q, signals):
+def is_conform(reqs, q, signals, reverse=False):
     ok = True
     lst = [condition(name='q', index=i, val=int(v)) for i,v in enumerate(q)] + \
           [condition(name='X', index=k, val=int(v)) for k,v in signals.iteritems()]
-    for q in lst:
-        ok = ok and any([it == q for it in item])
+    if reverse:
+        for q in reqs:
+            ok = ok and any([it == q for it in lst])
+    else:
+        for q in lst:
+            ok = ok and any([it == q for it in reqs])
+    # if ok:
+    #     print reqs, lst,
     return ok
+
+# ===== minimization ======
+
+def implicant_matrix(tbl, q, signals):
+    matrix = []
+    for item in ["".join(seq) for seq in itertools.product("01", repeat=q+signals)]:
+        # print item
+        q_it = item[:q]
+        signals_it = {(k+1):v for k,v in enumerate(item[q:])}
+        # print tbl, q_it, signals_it
+        matrix.append((item, any([is_conform(it, q_it, signals_it, True) for it in tbl])))
+    return matrix
+
+def do_glue(pair):
+    glued_1, glued_2, glued_res = [], [], []  # from list 1 or 2
+    for x in pair[0]:
+        for y in pair[1]:
+            diff = machine.code_diff(x,y)
+            if len(diff) == 1 and machine.code_stars(x) == machine.code_stars(y):
+                glued = x, y
+                glued_1.append(x)
+                glued_2.append(y)
+                impl = bytearray(x[:])
+                impl[diff[0]] = "*"
+                glued_res.append(str(impl))
+    return glued_1 + glued_2, glued_res
+
+def minimize(tbl, q, signals):
+    num = q+signals
+    print "====== minimization ======"
+    matrix = implicant_matrix(tbl, q, signals)
+    eq_1 = [x[0] for x in filter(lambda x: x[1], matrix)]
+    group_cur = [filter(lambda x: x.count("1") == n, eq_1) for n in range(num+1)]
+    glue = True
+    implicants = []
+    while group_cur:
+        groups = []
+        glued = []
+        for i in zip(group_cur, group_cur[1:]):
+            impl, glued_i = do_glue(i)
+            glued += impl
+            groups.append(glued_i)
+        implicants = list(set(implicants + reduce(operator.add, group_cur)) - set(glued))
+        group_cur = groups
+    print implicants
+
+    lst = {}
+    for minterm in eq_1:
+        lst[minterm] = [x for x in implicants if len(machine.code_diff(x, minterm, star=True)) == 0]
+    simple = list(set(itertools.chain(*[v for i,v in lst.iteritems() if len(v) == 1])))
+    not_simple = list(set(itertools.chain(*[v for i,v in lst.iteritems() if len(v) > 1])))
+
+    ok = False
+    index = 0
+    while not ok:
+        new_implicants = simple + not_simple[:index]
+        for minterm in eq_1:
+            if len([x for x in new_implicants if len(machine.code_diff(x, minterm, star=True)) == 0]) == 0:
+                # no coverage
+                index += 1
+                break
+        else:
+            ok = True
+        if index > len(not_simple):
+            raise Exception("WTF")
+
+    ret = []
+    for item in new_implicants:
+        cur_item = []
+        for i, char in enumerate(item):
+            if char != "*":
+                if i < q:
+                    cur_item.append(condition(name='q', index=i, val=int(char)))
+                else:
+                    cur_item.append(condition(name='X', index=i, val=int(char)))
+        ret.append(cur_item)
+    return ret
+
 
 if __name__ == '__main__':
     s = u'\u25cbX\u2081\u2191\xb9Y\u2081Y\u2082\u2191\xb2\u2193\xb9Y\u2082\u2193\xb2\u25cf'
@@ -125,7 +211,7 @@ if __name__ == '__main__':
         for char in jks:
             for item in char:
                 for simple in item:  # or-items
-                    ln.append('1' if is_comform(simple, t.q, signals) else '0')
+                    ln.append('1' if is_conform(simple, t.q, signals) else '0')
         print ln
         # print t
     headers = ["Q%s" % i for i in range(len(tbl[0].q))] + \
@@ -135,19 +221,22 @@ if __name__ == '__main__':
               ["J%d" % i for i in range(len(tbl[0].q))] + \
               ["K%d" % i for i in range(len(tbl[0].q))]
     print headers
-    # for t in tbl:
-    #     print t
 
-    print
     print
     for x in jks:
         print "."
         for y in x:
             print y
+    print
+    print
     # js = [generate_formula("J_{%d}" % (i), jk) for i, jk in enumerate(jks[0])]
+    for i,js in enumerate(jks[2]):
+        # for ji in js:
+        # print "J_%d" % i, "=", js
+        print minimize(js, len(tbl[0].q), len(p.in_signals))
     # ks = [generate_formula("K_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
     # ys = [generate_formula("Y_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
-    # # print js
+    # print js
     # print ks
     # latexmath2png.math2png(js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks, os.getcwd(), prefix = "adcs_")
 

@@ -401,10 +401,19 @@ class ADCSWindow (QMainWindow):
 
         if self.tr_table and self.model:
             jks = mtable.jk(self.tr_table)
+            q_count = len(self.tr_table[0].q)
+            x_count = len(self.model.in_signals)
+            
             funcs = [mtable.generate_formula("J_{%d}" % (i+1), jk) for i, jk in enumerate(jks[0])] + \
+                    [mtable.generate_formula("J_{%dm}" % (i+1), mtable.minimize(jk, q_count, x_count)) for i, jk in enumerate(jks[0])] + \
                     [mtable.generate_formula("K_{%d}" % (i+1), jk) for i, jk in enumerate(jks[1])] + \
-                    [mtable.generate_formula("Y_{%d}" % (i+1), jk) for i, jk in enumerate(jks[2])]
+                    [mtable.generate_formula("K_{%dm}" % (i+1), mtable.minimize(jk, q_count, x_count)) for i, jk in enumerate(jks[1])] + \
+                    [mtable.generate_formula("Y_{%d}" % (i+1), jk) for i, jk in enumerate(jks[2])] + \
+                    [mtable.generate_formula("Y_{%dm}" % (i+1), mtable.minimize(jk, q_count, x_count)) for i, jk in enumerate(jks[2])]
+            # mtable.latexmath2png.math2png(funcs, os.getcwd(), prefix = "adcs_")
+
             mtable.latexmath2png.math2png(funcs, os.getcwd(), prefix = "adcs_")
+
             tr_model = TransitionModel(self.ui.tr_table, self.tr_table, self.model, jks)
             self.ui.tr_table.setModel(tr_model)
             self.ui.tr_table.resizeColumnsToContents()

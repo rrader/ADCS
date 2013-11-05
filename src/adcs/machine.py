@@ -63,8 +63,11 @@ def bit_exchanges(src, first=None):
 class NotEnoughDigits(Exception):
     pass
 
-def code_diff(a, b):
-    return [x[0] for x in enumerate(zip(a, b)) if x[1][0]!=x[1][1] ]
+def code_stars(a):
+    return [i for i,x in enumerate(a) if x == "*" ]
+
+def code_diff(a, b, star=False):
+    return [x[0] for x in enumerate(zip(a, b)) if x[1][0]!=x[1][1] and (not star or (x[1][0] != "*" and x[1][1] != "*")) ]
 
 def is_near(a, b):
     return len(code_diff(a,b)) <= 1
