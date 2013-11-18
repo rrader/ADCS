@@ -1,4 +1,5 @@
 from collections import namedtuple
+from itertools import izip_longest
 
 from analysis import LSAAnalyser
 from parse import parse
@@ -6,16 +7,17 @@ from consts import *
 import machine
 from mtable import build_table, jk, minimize, generate_formula_args
 
-def s_operation(name, elementary, infix, latex, *args, **kwargs):
+def s_operation(name, elementary, infix, options, *args, **kwargs):
     nt = namedtuple(name + "_s", *args, **kwargs)
-    lname = latex['operator']
+    lname = options['operator']
     def new_str(self):
         if elementary:
             fmt = ', '.join("%r" for i in range(len(self)))
             return "%s%s" % (lname, fmt) % self
         else:
             if infix:
-                ret = (' %s ' % lname).join([repr(r) for r in self[0]])
+                lst = [repr(r) for r in self[0]]
+                ret = (' %s ' % lname).join(lst)
                 if len(self[0]) > 1:
                     ret = "(%s)" % ret
                 return ret
@@ -64,7 +66,11 @@ PROCESS(clk)
 VARIABLE synt_var_{sig} : STD_LOGIC;
 BEGIN
 IF (RISING_EDGE(clk)) THEN
-	synt_var_{sig} := (NOT(synt_var_{sig}) AND ({j_input})) OR (NOT({k_input}) AND (synt_var_{sig}));
+	synt_var_{sig} := (NOT(synt_var_{sig}) AND (  
+        {j_input}  
+        )) OR (NOT(  
+        {k_input}  
+        ) AND (synt_var_{sig}));
 END IF;
 {sig} <= synt_var_{sig};
 END PROCESS;
@@ -73,6 +79,18 @@ END PROCESS;
 port = "{sig} :  {dir}  STD_LOGIC{end}"
 signal = "SIGNAL {sig} :  STD_LOGIC;"
 y_out = "{sig} <= {formula};"
+
+def _orf(args):
+    if len(args) > 3:
+        iters = [args.__iter__()]*3
+        args = list(izip_longest(*iters, fillvalue="1"))
+        return _orf(args=[orf(args=arg) for arg in args])
+    elif len(args) == 1 or len(args) == 3:
+        return orf(args=args)
+    else:
+        return orf(args=args + ["1"] * (3 - len(args)))
+
+
 
 def generate_formula_vhdl(conditions):
     lst = []
@@ -90,8 +108,15 @@ def generate_formula_vhdl(conditions):
             else:
                 opf = op
             slst.append(opf(c.index))
-        lst.append( notf(args=[orf(args=slst)]) )
-    return orf(args=lst)
+        if len(slst) == 1:
+            if type(slst[0]) is notf:
+                lst.append( _orf(slst[0].args) )
+            else:
+                lst.append( notf(args=slst) )
+        else:
+            lst.append( notf(args=[_orf(args=slst)]) )
+    return _orf(args=lst)
+
 
 def vhdl(jks, inputs, outputs):
     q_count = len(jks[0])
