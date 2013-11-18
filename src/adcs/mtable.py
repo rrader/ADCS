@@ -70,7 +70,7 @@ def jk(tbl):
                 y[ys.index-1].append(qc_l)
     return j,k,y
 
-def generate_formula(pre, conditions):
+def generate_formula_args(conditions):
     lst = []
     for simple in conditions:
         slst = []
@@ -87,7 +87,10 @@ def generate_formula(pre, conditions):
                 opf = op
             slst.append(opf(c.index))
         lst.append(andf(args=slst))
-    return "%s = %r" % (pre, orf(args=lst))
+    return orf(args=lst)
+
+def generate_formula(pre, conditions):
+    return "%s = %r" % (pre, generate_formula_args(conditions))
 
 
 def is_conform(reqs, q, signals, reverse=False):
@@ -100,8 +103,6 @@ def is_conform(reqs, q, signals, reverse=False):
     else:
         for q in lst:
             ok = ok and any([it == q for it in reqs])
-    # if ok:
-    #     print reqs, lst,
     return ok
 
 # ===== minimization ======
@@ -235,8 +236,9 @@ if __name__ == '__main__':
         # print "J_%d" % i, "=", js
         print minimize(js, len(tbl[0].q), len(p.in_signals))
     # ks = [generate_formula("K_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
+    ks = [generate_formula_args(jk) for i, jk in enumerate(jks[1])]
     # ys = [generate_formula("Y_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
     # print js
-    # print ks
+    print ks
     # latexmath2png.math2png(js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks, os.getcwd(), prefix = "adcs_")
 

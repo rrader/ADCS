@@ -352,6 +352,47 @@
 
 
 
+
+
+
+
+      <widget class="QWidget" name="tableTab">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <attribute name="title">
+        <string>VHDL</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="tab_2_layout">
+        <item>
+
+
+            <layout class="QVBoxLayout" name="verticalLayout_3">
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Generated VHDL</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+               <widget class="QTextEdit" name="vhdl_text">
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+                <property name="fontFamily">
+                 <string>Courier</string>
+                </property>
+               </widget>
+             </item>
+
+         </layout>
+        </item>
+       </layout>
+      </widget>
+
+
+
      </widget>
 
 
