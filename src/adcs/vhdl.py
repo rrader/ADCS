@@ -64,7 +64,7 @@ PROCESS(clk)
 VARIABLE synt_var_{sig} : STD_LOGIC;
 BEGIN
 IF (RISING_EDGE(clk)) THEN
-	synt_var_{sig} := (NOT(synt_var_{sig}) AND ({j_input})) OR ({k_input});
+	synt_var_{sig} := (NOT(synt_var_{sig}) AND ({j_input})) OR (NOT({k_input}) AND (synt_var_{sig}));
 END IF;
 {sig} <= synt_var_{sig};
 END PROCESS;
