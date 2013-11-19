@@ -200,6 +200,7 @@ class ADCSWindow (QMainWindow):
         self.ui.actionOpen_bin.triggered.connect(self.open_bin)
         self.ui.actionSave_machine.triggered.connect(self.save_machine)
         self.ui.actionOpen_machine.triggered.connect(self.open_machine)
+        self.ui.actionSave_vhdl.triggered.connect(self.save_vhdl)
         self.ui.textEdit.installEventFilter(self)
 
         self.clear()
@@ -241,12 +242,12 @@ class ADCSWindow (QMainWindow):
             QtGui.QApplication.quit()
 
     def _updateMode(self):
-        # import ipydb; ipydb.db()
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.editorTab), not self.no_alg)
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.modelTab), bool(self.model))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.analysisTab), bool(self.model))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.machineTab), bool(self.machine))
         self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.tableTab), bool(self.tr_table))
+        self.ui.tabWidget.setTabEnabled(self.ui.tabWidget.indexOf(self.ui.vhdlTab), bool(self.machine))
         #use full ABSOLUTE path to the image, not relative
         ren = None
         self._update_graph()
@@ -321,6 +322,17 @@ class ADCSWindow (QMainWindow):
                 with open(fname, 'w') as f:
                     src = yaml.dump(machine.to_dict(self.machine, self.tr_table), default_flow_style=False)
                     f.write(src)
+        else:
+            QtGui.QMessageBox.about(self, "Can't save", "Analyse your algorithm first")
+
+    def save_vhdl(self):
+        if self.model:
+            fname = QtGui.QFileDialog.getSaveFileName(self, 'Save VHDL', '', 
+                    "vhdl .vhd (*.vhd)")
+            if fname:
+                with open(fname, 'w') as f:
+                    src = str(self.ui.vhdl_text.toPlainText().toUtf8()).decode('utf-8')
+                    f.write(src.encode('UTF-8'))
         else:
             QtGui.QMessageBox.about(self, "Can't save", "Analyse your algorithm first")
 
