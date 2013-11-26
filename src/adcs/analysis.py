@@ -227,10 +227,3 @@ if __name__ == '__main__':
     print s
     p = LSAAnalyser(parse(s))
     p.analysis()
-    # print p.matrix
-    # print p.signals
-    # print p.loop
-
-    # print graph_analyse.find_loops(p.matrix)
-    # print graph_analyse.find_paths(p.matrix)
-    # print graph_analyse.find_infinite_loops(p.matrix)

@@ -140,14 +140,13 @@ class TransitionModel(QtCore.QAbstractTableModel):
 
 
 class ADCSWindow (QMainWindow):
-    """ADCSWindow inherits QMainWindow"""
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
+        # building layout
         self.ui = Ui_ADCSWindow()
         self.ui.setupUi(self)
 
         pic = QtGui.QLabel(self)
-        # pic.setGeometry(10, 10, 400, 100)
         self.canvas = pic
         pic.setScaledContents(True)
         pic.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
@@ -163,7 +162,6 @@ class ADCSWindow (QMainWindow):
 
 
         mpic = QtGui.QLabel(self)
-        # pic.setGeometry(10, 10, 400, 100)
         self.m_canvas = mpic
         mpic.setScaledContents(True)
         mpic.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
@@ -179,7 +177,6 @@ class ADCSWindow (QMainWindow):
 
 
         fpic = QtGui.QLabel(self)
-        # pic.setGeometry(10, 10, 400, 100)
         self.f_canvas = fpic
         fpic.setScaledContents(True)
         fpic.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
@@ -189,8 +186,7 @@ class ADCSWindow (QMainWindow):
         scrollArea.setWidget(fpic)
         self.ui.formulasLayout.addWidget(scrollArea)
 
-        # self.connect(self.ui.toolButton_Start,
-        #              QtCore.SIGNAL('clicked()'), QtCore.SLOT('test_unicode()'))
+        # events
         self.ui.actionNew.triggered.connect(self.newDocument)
         self.ui.actionExit.triggered.connect(self.exitApp)
         self.ui.actionAnalyse.triggered.connect(self.validate)
@@ -398,7 +394,6 @@ class ADCSWindow (QMainWindow):
                     matrix += ','.join(["%6s" % (x) for x in i]) + "\n"
                 self.log(matrix)
 
-            # model = QtCode.QStandartItemModel(2,3,self)
             model = MatrixModel(self.ui.matrix, self.model)
             self.ui.matrix.setModel(model)
             self.ui.matrix.resizeColumnsToContents()
@@ -424,7 +419,6 @@ class ADCSWindow (QMainWindow):
                     [mtable.generate_formula("K_{%dm}" % (i+1), mtable.minimize(jk, q_count, x_count)) for i, jk in enumerate(jks[1])] + \
                     [mtable.generate_formula("Y_{%d}" % (i+1), jk) for i, jk in enumerate(jks[2])] + \
                     [mtable.generate_formula("Y_{%dm}" % (i+1), mtable.minimize(jk, q_count, x_count)) for i, jk in enumerate(jks[2])]
-            # mtable.latexmath2png.math2png(funcs, os.getcwd(), prefix = "adcs_")
 
             mtable.latexmath2png.math2png(funcs, os.getcwd(), prefix = "adcs_")
 
@@ -434,7 +428,6 @@ class ADCSWindow (QMainWindow):
             self.ui.vhdl_text.setPlainText(vhdl.vhdl(jks, x_count, y_count))
 
     def _update_graph(self):
-        # self.canvas.graph = self.model
         self.log("Drawing...", False)
         if os.path.exists(IMG_PATH):
             self.canvas.setPixmap(QtGui.QPixmap(IMG_PATH))

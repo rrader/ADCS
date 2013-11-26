@@ -182,17 +182,6 @@ if __name__ == '__main__':
     print "===="
     conn, sigs = make_machine(p.matrix, p.barenodes)
     print conn, sigs
-    # import graph
-    # graph.draw_machine(conn, sigs)
-
-    # import yaml
-    # print (conn, sigs)
-    # # print 
-    # y = yaml.dump(to_dict((conn, sigs)), default_flow_style=False)
-    # print y
-    # print
-    # # print y
-    # print from_dict(yaml.load(y))
     a = encode_machine(conn, sigs)
     d = to_dict(a)
     print a

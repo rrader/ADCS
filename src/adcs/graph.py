@@ -52,8 +52,6 @@ def renumerate(connections):
     for conn in connections:
         numbers.get_id(conn[0]+1)
         numbers.get_id(conn[1]+1)
-    
-    # numbers[max(numbers.keys())] = 1
 
     return numbers
 

@@ -150,11 +150,7 @@ if __name__ == '__main__':
     tbl = build_table(*mc)
     jks = jk(tbl)
 
-    # ks = [generate_formula("K_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
     js = [generate_formula_vhdl(jk) for i, jk in enumerate(jks[0])]
     ks = [generate_formula_vhdl(jk) for i, jk in enumerate(jks[1])]
-    # ys = [generate_formula("Y_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
-    # print js
-    # print js
     print p.in_signals
     vhdl(jks, len(p.in_signals), len(p.out_signals))

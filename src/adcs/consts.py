@@ -119,16 +119,6 @@ INPUT_KEYS = {
 INPUT_KEYS.update(dict(((str(key), unichr(val)) for key, val in SUBSCRIPT.iteritems())))
 
 
-# CYCLE_NODE = 999  # id of begin and end node
-
-# def ppi(i, matrix):
-#     """Preprocess indexes"""
-#     print "bla %d" % i
-#     if i == 0 or i == len(matrix)-1:
-#         return CYCLE_NODE
-#     else:
-#         return i
-
 class Numerator(dict):
     def get_id(self, num):
         # print "getting ", num

@@ -230,15 +230,7 @@ if __name__ == '__main__':
             print y
     print
     print
-    # js = [generate_formula("J_{%d}" % (i), jk) for i, jk in enumerate(jks[0])]
     for i,js in enumerate(jks[2]):
-        # for ji in js:
-        # print "J_%d" % i, "=", js
         print minimize(js, len(tbl[0].q), len(p.in_signals))
-    # ks = [generate_formula("K_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
     ks = [generate_formula_args(jk) for i, jk in enumerate(jks[1])]
-    # ys = [generate_formula("Y_{%d}" % (i), jk) for i, jk in enumerate(jks[1])]
-    # print js
     print ks
-    # latexmath2png.math2png(js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks + js + ks, os.getcwd(), prefix = "adcs_")
-
