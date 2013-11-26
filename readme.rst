@@ -1,13 +1,16 @@
 Dependencies
 ===============
 
-pip
+python
 ----------
-#matplotlib
-pyqt4
-#networkx
-pydot
+  
+- pyqt4
+- pyYAML
+- pydot
 
 apps
 ----------
-graphviz
+
+- python>=2.7
+- graphviz
+- latex
