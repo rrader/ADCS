@@ -258,7 +258,7 @@ class ADCSWindow (QMainWindow):
         if self.model:
             txt = self.ui.info.toPlainText()
             self.ui.info.setPlainText("%s\nInput signals: %d\nOutput signals: %d" % (txt, len(self.model.in_signals), len(self.model.out_signals)))
-            graph.draw_graph(self.model.barenodes, self.model.connections, self.model.matrix, loop=self.model.loop, renumerated=ren)
+            graph.draw_graph(self.model.barenodes, self.model.connections, self.model.matrix, loop=self.model.loop, renumerated=ren, added=self.machine[3])
 
 
         if os.path.exists(IMG_PATH):

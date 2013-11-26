@@ -4,13 +4,15 @@ from consts import *
 
 import pydot
 
-def draw_graph(nodes, connections, matrix, loop, renumerated):
+def draw_graph(nodes, connections, matrix, loop, renumerated, added=None):
     if renumerated is None:
         renumerated = {}
+    if added is None:
+        added = []
     if loop is None:
         loop = []
     print connections
-    renumerated[max(renumerated.keys())+1] = 1
+    renumerated[max([k for k in renumerated.keys() if k-1 not in added])+1] = 1
     G = pydot.Dot('graphname', graph_type='digraph', rankdir='TB', size=100)
     subg = pydot.Subgraph('', rank='same')
     G.add_subgraph(subg)
@@ -47,7 +49,7 @@ def draw_graph(nodes, connections, matrix, loop, renumerated):
     G.write_png('graph.png')
     print "image write"
 
-def renumerate(connections):
+def renumerate(connections): 
     numbers = Numerator()
     for conn in connections:
         numbers.get_id(conn[0]+1)
