@@ -178,7 +178,7 @@ def minimize(tbl, q, signals):
                 if i < q:
                     cur_item.append(condition(name='q', index=i, val=int(char)))
                 else:
-                    cur_item.append(condition(name='X', index=i, val=int(char)))
+                    cur_item.append(condition(name='X', index=i-1, val=int(char)))
         ret.append(cur_item)
     return ret
 

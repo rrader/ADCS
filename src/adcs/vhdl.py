@@ -44,7 +44,8 @@ LIBRARY work;
 ENTITY Custom_FSM IS
 	PORT
     (
-clk :  IN  STD_LOGIC;
+clk  :  IN  STD_LOGIC;
+init : IN  STD_LOGIC;
 {ports}
     );
 END Custom_FSM;
@@ -65,14 +66,14 @@ process = """
 PROCESS(clk)
 VARIABLE synt_var_{sig} : STD_LOGIC;
 BEGIN
+synt_var_{sig} := {sig};
 IF (RISING_EDGE(clk)) THEN
 	synt_var_{sig} := (NOT(synt_var_{sig}) AND (  
         {j_input}  
-        )) OR (NOT(  
-        {k_input}  
-        ) AND (synt_var_{sig}));
+        )) OR ((synt_var_{sig}) AND 
+        NOT( {k_input}  ));
 END IF;
-{sig} <= synt_var_{sig};
+{sig} <= init AND synt_var_{sig};
 END PROCESS;
 """
 
@@ -83,12 +84,12 @@ y_out = "{sig} <= {formula};"
 def _orf(args):
     if len(args) > 3:
         iters = [args.__iter__()]*3
-        args = list(izip_longest(*iters, fillvalue="1"))
+        args = list(izip_longest(*iters, fillvalue="0"))
         return _orf(args=[orf(args=arg) for arg in args])
     elif len(args) == 1 or len(args) == 3:
         return orf(args=args)
     else:
-        return orf(args=args + ["1"] * (3 - len(args)))
+        return orf(args=args + ["0"] * (3 - len(args)))
 
 
 
