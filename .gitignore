@@ -9,3 +9,5 @@
 *.egg-info
 *.machine
 docs
+venv
+.idea

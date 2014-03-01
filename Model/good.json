@@ -1,0 +1,15 @@
+{
+    "functions": {
+        "d": "_and(a,b)",
+        "c1": "c",
+        "e": "_or(d,c1)",
+        "f": "_not(e)",
+        "g": "_or(a,e)"
+    },
+    "inputs": [{
+        "a": "0",
+        "b": "0",
+        "c": "0"
+    }],
+    "result_func": "(f == _not(_or(_and(a,b), c))) and (g == _or(a,_or(_and(a,b),c)))"
+}
