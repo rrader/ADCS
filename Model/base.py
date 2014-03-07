@@ -146,7 +146,7 @@ class IterativeModel(BaseModel):
             zeros = len(re.findall('0+', v_str))
             var = self.columns[i]
             if ones + zeros > 2:
-                msg = "Race condition", var
+                msg = "Race condition", "{} [{}]".format(var, format_test(self.test))
                 if msg not in self.problems:
                     self.problems.append(msg)
                 print(msg)
@@ -167,9 +167,21 @@ class Iterative2Model(TwoModel, IterativeModel):
 
 
 class Iterative3Model(ThreeModel, IterativeModel):
+    def _prepare_test(self, test):
+        r = {}
+        for var, x in test.items():
+            if self.test[var] != x:
+                r[var] = 'x'
+            else:
+                r[var] = x
+        if 'x' in r.values():
+            return [r, test]
+        else:
+            return [r]
+
     def _analyze(self):
         super()._analyze()
-        if 'x' in self.history[-1]:
+        if 'x' in self.history[-1] and 'x' not in self.test.values():
             msg = ("Bad circuit. Can't model", format_test(self.test))
             if msg not in self.problems:
                 self.problems.append(msg)

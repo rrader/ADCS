@@ -2,10 +2,9 @@
     "functions": {
         "e": "_and(a,c)",
         "g": "_not(_or(e,f))",
-        "p": "_not(_and(g,q))",
+        "p": "_not(_and(b,d))",
         "f": "_and(b,c)",
-        "h": "_not(_and(_and(g,c),d))",
-        "q": "_not(_and(p,h))"
+        "q": "_and(f,c)"
     },
     "inputs": [
         {

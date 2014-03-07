@@ -6,7 +6,7 @@ from base import Iterative2Model, Iterative3Model, Iterative5Model
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-f", "--file", dest="filename",
-                      help="write report to FILE", metavar="FILE")
+                      help="open FILE", metavar="FILE")
     parser.add_option("-r", dest="races", action="store_true", help="find races")
     parser.add_option("-2", dest="model", action="store_const", help="2-model [default]", const=2)
     parser.add_option("-3", dest="model", action="store_const", help="3-model", const=3)
