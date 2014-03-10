@@ -1,0 +1,74 @@
+{
+    "components": {
+        "c1": {
+            "size": [10,7],
+            "contacts": [[2.5,0], [5,0], [7.5,0],
+                         [2.5,7], [5,7], [7.5,7],
+                         [0,3.5], [10,3.5]],
+            "contact_pad": [0.5,0.5]
+        },
+        "pin": {
+            "size": [0,0],
+            "contacts": [[0,0]],
+            "contact_pad": [0.7,0.7],
+            "text_margin": [0, 1],
+            "through": true
+        }
+    },
+    "board": {
+        "size": [45, 25],
+        "margins": [2,2,2,2],
+        "grid": 0.5,
+        "resolution": 20,
+        "min_distance": 0.5,
+        "layers": 2,
+        "components": [
+            {
+                "type": "pin",
+                "name": "V",
+                "position": [43,2]
+            },
+            {
+                "type": "pin",
+                "name": "GND",
+                "position": [2,23]
+            },
+            {
+                "type": "c1",
+                "name": "n1",
+                "position": [5,5],
+                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+            },
+            {
+                "type": "c1",
+                "name": "n2",
+                "position": [17,5],
+                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+            },
+            {
+                "type": "c1",
+                "name": "n3",
+                "position": [29,5],
+                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+            },
+            {
+                "type": "c1",
+                "name": "n4",
+                "position": [5,15],
+                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+            },
+            {
+                "type": "c1",
+                "name": "n5",
+                "position": [17,15],
+                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+            },
+            {
+                "type": "c1",
+                "name": "n6",
+                "position": [29,15],
+                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+            }
+        ]
+    }
+}
