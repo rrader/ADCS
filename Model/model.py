@@ -1,3 +1,10 @@
+def format_test(test):
+    r = ""
+    for k in sorted(test.keys()):
+        r += "%s:%s, " % (k, test[k])
+    return r
+
+
 class TwoModel(object):
     DEFAULT = '0'
 
@@ -50,6 +57,25 @@ class ThreeModel(object):
                 '_or': _or,
                 '_not': _not,
                 }
+
+    def _prepare_test(self, test):
+        r = {}
+        for var, x in test.items():
+            if self.test[var] != x:
+                r[var] = 'x'
+            else:
+                r[var] = x
+        if 'x' in r.values():
+            return [r, test]
+        else:
+            return [r]
+
+    def _analyze(self):
+        super()._analyze()
+        if 'x' in self.history[-1] and 'x' not in self.test.values():
+            msg = ("Bad circuit. Can't model", format_test(self.test))
+            if msg not in self.problems:
+                self.problems.append(msg)
 
 
 class FiveModel(object):
@@ -135,3 +161,18 @@ class FiveModel(object):
                 '_or': _or,
                 '_not': _not,
                 }
+
+    def _prepare_test(self, test):
+        r = {}
+        for var, x in test.items():
+            if self.test[var] != x:
+                if self.test[var] == '1' and x == '0':
+                    r[var] = 'p'
+                else:
+                    r[var] = 'h'
+            else:
+                r[var] = x
+        if 'p' in r.values() or 'h' in r.values():
+            return [r, test]
+        else:
+            return [r]

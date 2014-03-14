@@ -93,7 +93,7 @@ class Editor(Tk):
         for key, group in groupby(sorted_lines, key=itemgetter(1)):
             self.patterns, pathes = self.route_for_pins(key)
             pathes_d[key] = pathes
-            print(pathes)
+            # print(pathes)
         # self.patterns, pathes = self.route_for_pins(1, max_steps=40)
         # print(self.patterns)
         self.pathes = pathes_d
@@ -218,39 +218,46 @@ class Editor(Tk):
         def do_backtrace(ti, tj, tz, step):
             path = []
             i, j, z = ti, tj, tz
+            step += 1
             while step_num[z][j][i] != 1:
                 path.append((i, j, z))
+                step -= 1
                 try:
                     if step_num[z][j][i + 1] == step - 1:
                         i, j, z = i + 1, j, z
+                        continue
                 except IndexError:
                     pass
                 try:
                     if step_num[z][j][i - 1] == step - 1:
                         i, j, z = i - 1, j, z
+                        continue
                 except IndexError:
                     pass
                 try:
                     if step_num[z][j + 1][i] == step - 1:
                         i, j, z = i, j + 1, z
+                        continue
                 except IndexError:
                     pass
                 try:
                     if step_num[z][j - 1][i] == step - 1:
                         i, j, z = i, j - 1, z
+                        continue
                 except IndexError:
                     pass
                 try:
                     if step_num[z + 1][j][i] == step - 1:
                         i, j, z = i, j, z + 1
+                        continue
                 except IndexError:
                     pass
                 try:
-                    if step_num[z - 1][j][i] == step - 1:
+                    if step_num[z - 1][j][i] == step - 1 and z-1 >= 0:
                         i, j, z = i, j, z - 1
+                        continue
                 except IndexError:
                     pass
-                step -= 1
             path.append((i, j, z))
             print(path)
             return path
@@ -270,6 +277,7 @@ class Editor(Tk):
                     if ret is not None:
                         ti, tj, tz = ret
                         path = do_backtrace(ti, tj, tz, step + 1)
+                        print(">>",path)
                         break
                     step += 1
                     if max_steps is not None and step > max_steps:
@@ -356,6 +364,7 @@ class Editor(Tk):
             for path in pathes:
                 for (i,j,z), (i2,j2,z2) in pairwise(path):
                     if z != z2:
+                        print(">> ", (i,j,z), (i2,j2,z2))
                         self.canvas.create_oval(self.c((i+0.5-0.4) * self.ic.grid),
                                                 self.c((j+0.5-0.4) * self.ic.grid),
                                                 self.c((i+0.5+0.4) * self.ic.grid),

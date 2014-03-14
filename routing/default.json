@@ -37,37 +37,37 @@
                 "type": "c1",
                 "name": "n1",
                 "position": [5,5],
-                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+                "connect": ["n6:0", "n3:2", "n1:5", null, "n5:4", null, "V:0", "GND:0"]
             },
             {
                 "type": "c1",
                 "name": "n2",
                 "position": [17,5],
-                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+                "connect": [null, "n6:3", null, "n1:1", "n5:4", null, "V:0", "GND:0"]
             },
             {
                 "type": "c1",
                 "name": "n3",
                 "position": [29,5],
-                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+                "connect": [null, null, null, null, "n5:4", null, "V:0", "GND:0"]
             },
             {
                 "type": "c1",
                 "name": "n4",
                 "position": [5,15],
-                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+                "connect": ["n6:0", null, null, null, "n5:4", null, "V:0", "GND:0"]
             },
             {
                 "type": "c1",
                 "name": "n5",
                 "position": [17,15],
-                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+                "connect": [null, null, null, null, "n5:4", null, "V:0", "GND:0"]
             },
             {
                 "type": "c1",
                 "name": "n6",
                 "position": [29,15],
-                "connect": [null, null, null, null, null, null, "V:0", "GND:0"]
+                "connect": [null, null, null, null, "n5:4", null, "V:0", "GND:0"]
             }
         ]
     }
