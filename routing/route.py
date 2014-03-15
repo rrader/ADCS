@@ -82,6 +82,7 @@ class Editor(Tk):
                         index += 1
                         new_ind = index
                     lines[conn_from] = new_ind
+        print(lines)
         return lines
 
     def do_routing(self):

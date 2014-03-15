@@ -44,7 +44,7 @@ if __name__ == "__main__":
     modeller = Modeller(data)
     if hasattr(modeller, 'set_ranking'):
         modeller.set_ranking(options.ranking)
-    # exit(0)
+
     if options.races:
         modeller.find_races()
     else:
